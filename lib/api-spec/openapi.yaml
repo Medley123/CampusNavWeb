@@ -1,0 +1,279 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: CampusNav API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: buildings
+    description: Campus building operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /buildings:
+    get:
+      operationId: listBuildings
+      tags: [buildings]
+      summary: List all campus buildings
+      responses:
+        "200":
+          description: List of buildings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Building"
+
+    post:
+      operationId: createBuilding
+      tags: [buildings]
+      summary: Create a new building
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BuildingInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Building"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /buildings/seed:
+    post:
+      operationId: seedBuildings
+      tags: [buildings]
+      summary: Seed database with default CTU campus buildings
+      responses:
+        "200":
+          description: Seeded successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SeedResult"
+
+  /buildings/stats:
+    get:
+      operationId: getBuildingStats
+      tags: [buildings]
+      summary: Get building statistics by category
+      responses:
+        "200":
+          description: Building statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BuildingStats"
+
+  /buildings/{id}:
+    get:
+      operationId: getBuilding
+      tags: [buildings]
+      summary: Get a building by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Building found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Building"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    put:
+      operationId: updateBuilding
+      tags: [buildings]
+      summary: Update a building
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BuildingUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Building"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      operationId: deleteBuilding
+      tags: [buildings]
+      summary: Delete a building
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+
+    Building:
+      type: object
+      required: [id, slug, name, shortName, category, description, floors, rooms, latitude, longitude, color, createdAt, updatedAt]
+      properties:
+        id:          { type: integer }
+        slug:        { type: string }
+        name:        { type: string }
+        shortName:   { type: string }
+        category:    { type: string }
+        description: { type: string }
+        floors:      { type: integer }
+        floorsLocations:
+          type: array
+          items: { type: string, enum: [Ground, 2F, 3F, 4F] }
+        rooms:
+          type: array
+          items: { type: string }
+        latitude:    { type: number }
+        longitude:   { type: number }
+        color:       { type: string }
+        images:
+          type: array
+          items: { type: string }
+        createdAt:   { type: string }
+        updatedAt:   { type: string }
+
+    BuildingInput:
+      type: object
+      required: [slug, name, shortName, category, description, floors, rooms, latitude, longitude, color]
+      properties:
+        slug:        { type: string, minLength: 1 }
+        name:        { type: string, minLength: 1 }
+        shortName:   { type: string, minLength: 1 }
+        category:    { type: string, enum: [academic, admin, facility, sports] }
+        description: { type: string }
+        floors:      { type: integer, minimum: 1 }
+        floorsLocations:
+          type: array
+          minItems: 1
+          items: { type: string, enum: [Ground, 2F, 3F, 4F] }
+        rooms:
+          type: array
+          items: { type: string }
+        latitude:    { type: number }
+        longitude:   { type: number }
+        color:       { type: string }
+        images:
+          type: array
+          items: { type: string }
+
+    BuildingUpdate:
+      type: object
+      properties:
+        slug:        { type: string, minLength: 1 }
+        name:        { type: string, minLength: 1 }
+        shortName:   { type: string, minLength: 1 }
+        category:    { type: string, enum: [academic, admin, facility, sports] }
+        description: { type: string }
+        floors:      { type: integer, minimum: 1 }
+        floorsLocations:
+          type: array
+          minItems: 1
+          items: { type: string, enum: [Ground, 2F, 3F, 4F] }
+        rooms:
+          type: array
+          items: { type: string }
+        latitude:    { type: number }
+        longitude:   { type: number }
+        color:       { type: string }
+        images:
+          type: array
+          items: { type: string }
+
+    BuildingStats:
+      type: object
+      required: [total, byCategory]
+      properties:
+        total: { type: integer }
+        byCategory:
+          type: array
+          items:
+            $ref: "#/components/schemas/CategoryCount"
+
+    CategoryCount:
+      type: object
+      required: [category, count]
+      properties:
+        category: { type: string }
+        count:    { type: integer }
+
+    SeedResult:
+      type: object
+      required: [inserted, message]
+      properties:
+        inserted: { type: integer }
+        message:  { type: string }
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
