@@ -706,7 +706,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: "flex-end",
     alignItems: "flex-start",
     paddingBottom: 100,
@@ -860,7 +860,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   menuBackdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 90,
   },
   accountMenu: {

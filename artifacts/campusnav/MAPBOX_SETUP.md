@@ -71,3 +71,14 @@ The map should load automatically on the web version when you access the app.
 The Mapbox implementation is in: `mocks/react-native-maps-web.ts`
 
 This file wraps `react-map-gl` to provide the same API as `react-native-maps`, allowing the code to work seamlessly across both mobile and web platforms.
+
+## Android APK map setup
+
+The web build uses the Mapbox-backed mock, but Android uses the native `react-native-maps` view. Before creating an APK, provide a Google Maps Android API key as a build-time environment variable:
+
+```bash
+$env:GOOGLE_MAPS_API_KEY="your_android_google_maps_key"
+pnpm --dir artifacts/campusnav exec eas build --platform android
+```
+
+For an EAS build, configure `GOOGLE_MAPS_API_KEY` as an EAS secret or environment variable. The key must have Maps SDK for Android enabled and be restricted to package `com.kaethy04.campusnav`; the Expo config plugin injects it into the Android app automatically.
