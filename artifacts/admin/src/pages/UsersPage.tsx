@@ -69,7 +69,6 @@ export default function UsersPage() {
                   <tr className="border-y bg-muted/30 text-left text-muted-foreground">
                     <th className="px-4 py-3 font-medium">User</th>
                     <th className="px-4 py-3 font-medium">Username</th>
-                    <th className="px-4 py-3 font-medium">Gmail</th>
                     <th className="px-4 py-3 font-medium">Last login</th>
                   </tr>
                 </thead>
@@ -89,7 +88,6 @@ export default function UsersPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3 font-medium text-primary">@{user.username}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{user.email}</td>
                       <td className="px-4 py-3 text-muted-foreground">
                         {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : "-"}
                       </td>

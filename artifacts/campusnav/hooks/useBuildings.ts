@@ -27,6 +27,7 @@ type ApiBuilding = {
   floors: number;
   floorsLocations?: Building["floorsLocations"];
   rooms: string[];
+  images?: string[];
   latitude: number;
   longitude: number;
   color: string;
@@ -72,6 +73,7 @@ const mapped: Building[] = buildingData.map((b) => ({
         floors: b.floors,
         floorsLocations: b.floorsLocations?.length ? b.floorsLocations : ["Ground"],
         rooms: b.rooms ?? [],
+        images: b.images ?? [],
         latitude: b.latitude,
         longitude: b.longitude,
         color: b.color,

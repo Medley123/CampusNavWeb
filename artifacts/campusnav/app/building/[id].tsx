@@ -2,9 +2,12 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
 import React from "react";
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import { Gesture, GestureDetector, GestureHandlerRootView } from "react-native-gesture-handler";
 import {
   Image,
   Linking,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -21,18 +24,40 @@ import {
 import { useColors } from "@/hooks/useColors";
 import { useBuildings } from "@/hooks/useBuildings";
 
-const DEFAULT_BUILDING_IMAGE = require("../../assets/images/ctucampus.jpg");
-
 export default function BuildingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { buildings } = useBuildings();
+  const [viewingPhotoIndex, setViewingPhotoIndex] = React.useState<number | null>(null);
+  const zoomScale = useSharedValue(1);
+  const pinchStartScale = useSharedValue(1);
+  const viewerImageStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: zoomScale.value }],
+  }));
+  const pinchGesture = Gesture.Pinch()
+    .onUpdate((event) => {
+      zoomScale.value = Math.min(4, Math.max(1, pinchStartScale.value * event.scale));
+    })
+    .onEnd(() => {
+      pinchStartScale.value = zoomScale.value;
+    });
 
   const building = buildings.find((b) => b.id === (id ?? ""));
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
+
+  const setZoom = (nextScale: number) => {
+    const scale = Math.min(4, Math.max(1, nextScale));
+    zoomScale.value = withTiming(scale, { duration: 150 });
+    pinchStartScale.value = scale;
+  };
+
+  const closePhotoViewer = () => {
+    setViewingPhotoIndex(null);
+    setZoom(1);
+  };
 
   if (!building) {
     return (
@@ -83,16 +108,6 @@ export default function BuildingDetailScreen() {
           { backgroundColor: building.color, paddingTop: topPad + 12 },
         ]}
       >
-        <Image
-          source={
-            building.images?.[0]
-              ? { uri: building.images[0] }
-              : DEFAULT_BUILDING_IMAGE
-          }
-          style={[StyleSheet.absoluteFill, { opacity: 0.55 }]}
-          resizeMode="cover"
-        />
-
         <Pressable
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -155,6 +170,107 @@ export default function BuildingDetailScreen() {
             {building.description}
           </Text>
         </View>
+
+        {building.images?.length ? (
+          <View
+            style={[
+              styles.section,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+          >
+            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
+              Photos
+            </Text>
+            <View style={styles.imageGrid}>
+              {building.images.map((image, index) => (
+                <Pressable
+                  key={`${image}-${index}`}
+                  style={styles.imageTile}
+                  onPress={() => {
+                    setZoom(1);
+                    setViewingPhotoIndex(index);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${building.name} photo ${index + 1}`}
+                >
+                  <Image
+                    source={{ uri: image }}
+                    style={styles.buildingImage}
+                    resizeMode="cover"
+                  />
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        ) : null}
+
+        <Modal
+          visible={viewingPhotoIndex !== null}
+          transparent
+          animationType="fade"
+          statusBarTranslucent
+          onRequestClose={closePhotoViewer}
+        >
+          <GestureHandlerRootView style={styles.viewerRoot}>
+            <View style={styles.viewerOverlay}>
+              <View style={[styles.viewerHeader, { paddingTop: topPad }]}>
+                <Text style={styles.viewerCounter}>
+                  {viewingPhotoIndex !== null ? viewingPhotoIndex + 1 : 0} / {building.images?.length ?? 0}
+                </Text>
+                <Pressable
+                  onPress={closePhotoViewer}
+                  style={styles.viewerIconButton}
+                  accessibilityRole="button"
+                  accessibilityLabel="Close photo viewer"
+                >
+                  <Feather name="x" size={22} color="#fff" />
+                </Pressable>
+              </View>
+
+              <View style={styles.viewerImageStage}>
+                {viewingPhotoIndex !== null && building.images?.[viewingPhotoIndex] ? (
+                  <GestureDetector gesture={pinchGesture}>
+                    <Animated.View style={[styles.viewerImageFrame, viewerImageStyle]}>
+                      <Image
+                        source={{ uri: building.images[viewingPhotoIndex] }}
+                        style={styles.viewerImage}
+                        resizeMode="contain"
+                      />
+                    </Animated.View>
+                  </GestureDetector>
+                ) : null}
+              </View>
+
+              <View style={[styles.viewerControls, { paddingBottom: bottomPad + 12 }]}>
+                <Pressable
+                  onPress={() => setZoom(zoomScale.value - 0.5)}
+                  style={styles.viewerIconButton}
+                  accessibilityRole="button"
+                  accessibilityLabel="Zoom out"
+                >
+                  <Feather name="minus" size={21} color="#fff" />
+                </Pressable>
+                <Pressable
+                  onPress={() => setZoom(1)}
+                  style={styles.viewerResetButton}
+                  accessibilityRole="button"
+                  accessibilityLabel="Reset zoom"
+                >
+                  <Feather name="rotate-ccw" size={18} color="#fff" />
+                  <Text style={styles.viewerResetText}>Reset</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => setZoom(zoomScale.value + 0.5)}
+                  style={styles.viewerIconButton}
+                  accessibilityRole="button"
+                  accessibilityLabel="Zoom in"
+                >
+                  <Feather name="plus" size={21} color="#fff" />
+                </Pressable>
+              </View>
+            </View>
+          </GestureHandlerRootView>
+        </Modal>
 
         {/* Location */}
         <View
@@ -348,6 +464,85 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "Inter_400Regular",
     lineHeight: 22,
+  },
+  imageGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  imageTile: {
+    width: "48%",
+  },
+  buildingImage: {
+    width: "100%",
+    height: 132,
+    borderRadius: 10,
+    backgroundColor: "rgba(128,128,128,0.15)",
+  },
+  viewerOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.96)",
+  },
+  viewerRoot: {
+    flex: 1,
+  },
+  viewerHeader: {
+    minHeight: 64,
+    paddingHorizontal: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  viewerCounter: {
+    color: "#fff",
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+  },
+  viewerImageStage: {
+    flex: 1,
+    overflow: "hidden",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  viewerImageFrame: {
+    width: "100%",
+    height: "78%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  viewerImage: {
+    width: "100%",
+    height: "100%",
+  },
+  viewerControls: {
+    minHeight: 72,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 20,
+  },
+  viewerIconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(255,255,255,0.14)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  viewerResetButton: {
+    minHeight: 44,
+    paddingHorizontal: 14,
+    borderRadius: 22,
+    backgroundColor: "rgba(255,255,255,0.14)",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+  },
+  viewerResetText: {
+    color: "#fff",
+    fontSize: 13,
+    fontFamily: "Inter_600SemiBold",
   },
   coordRow: {
     flexDirection: "row",

@@ -10,7 +10,7 @@ ADMIN_SMTP_USER=admin@gmail.com
 ADMIN_SMTP_APP_PASSWORD=your-gmail-app-password
 ```
 
-The Admin Panel signs in through `/api/admin/login`. The first startup seeds one Firestore admin account from these variables. After that, the account in Firestore is the shared account for every device. The Settings page can update the admin Gmail, display name, and app password. The API stores the session in an HttpOnly cookie and protects building create/update/delete/seed operations, image uploads, and the admin user list. Public building read endpoints remain available to the mobile app.
+The Admin Panel signs in through `/api/admin/login`. The first startup seeds one Supabase admin account from these variables if no admin record exists. After that, the account in Supabase is shared across devices. The Settings page can update the admin Gmail, display name, and app password. The API stores the session in an HttpOnly cookie and protects building create/update/delete/seed operations, image uploads, and the admin user list. Public building read endpoints remain available to the mobile app.
 
 `ADMIN_PASSWORD` is an app password for CampusNav. Never use or store the real Gmail password. The app does not need access to Gmail passwords.
 

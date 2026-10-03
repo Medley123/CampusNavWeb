@@ -7,9 +7,11 @@
     "dev": "cross-env NODE_ENV=development PORT=8080 pnpm run build && pnpm run start",
     "build": "node ./build.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "migrate:firebase": "node ./scripts/migrate-firebase-to-supabase.mjs"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.117.2",
     "@workspace/api-zod": "workspace:*",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",

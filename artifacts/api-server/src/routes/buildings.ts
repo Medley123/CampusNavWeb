@@ -1,51 +1,54 @@
 import { Router } from "express";
 import { requireAdmin } from "../middlewares/admin-auth.js";
-import { FieldValue } from "firebase-admin/firestore";
-import { db } from "../lib/firebase.js";
+import { supabase } from "../lib/supabase.js";
 
 const router = Router();
-const COL = "buildings";
-const META = "meta";
-const COUNTER_DOC = "buildingCounter";
+type BuildingRow = {
+  id: number;
+  slug: string;
+  name: string;
+  short_name: string;
+  category: string;
+  description: string;
+  floors: number;
+  floors_locations: string[] | null;
+  rooms: string[] | null;
+  latitude: number;
+  longitude: number;
+  color: string;
+  images: string[] | null;
+  created_at: string;
+  updated_at: string;
+};
 
-async function getNextId(): Promise<number> {
-  const ref = db.collection(META).doc(COUNTER_DOC);
-  const result = await db.runTransaction(async (tx) => {
-    const doc = await tx.get(ref);
-    const current = doc.exists ? (doc.data()?.["nextId"] as number ?? 1) : 1;
-    tx.set(ref, { nextId: current + 1 }, { merge: true });
-    return current;
-  });
-  return result;
-}
-
-function docToBuilding(id: string, data: FirebaseFirestore.DocumentData) {
+function docToBuilding(data: BuildingRow) {
   return {
-    id: data["id"] as number,
-    slug: data["slug"] as string,
-    name: data["name"] as string,
-    shortName: data["shortName"] as string,
-    category: data["category"] as string,
-    description: data["description"] as string,
-    floors: data["floors"] as number,
-    floorsLocations: (data["floorsLocations"] as string[])?.length
-      ? (data["floorsLocations"] as string[])
+    id: data.id,
+    slug: data.slug,
+    name: data.name,
+    shortName: data.short_name,
+    category: data.category,
+    description: data.description,
+    floors: data.floors,
+    floorsLocations: data.floors_locations?.length
+      ? data.floors_locations
       : ["Ground"],
-    rooms: (data["rooms"] as string[]) ?? [],
-    latitude: data["latitude"] as number,
-    longitude: data["longitude"] as number,
-    color: data["color"] as string,
-    images: (data["images"] as string[]) ?? [],
-    createdAt: data["createdAt"]?.toDate?.()?.toISOString() ?? new Date().toISOString(),
-    updatedAt: data["updatedAt"]?.toDate?.()?.toISOString() ?? new Date().toISOString(),
+    rooms: data.rooms ?? [],
+    latitude: data.latitude,
+    longitude: data.longitude,
+    color: data.color,
+    images: data.images ?? [],
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
   };
 }
 
 // GET /buildings
 router.get("/buildings", async (req, res) => {
   try {
-    const snap = await db.collection(COL).orderBy("name").get();
-    const buildings = snap.docs.map((d) => docToBuilding(d.id, d.data()));
+    const { data, error } = await supabase.from("buildings").select("*").order("name");
+    if (error) throw error;
+    const buildings = (data as BuildingRow[]).map(docToBuilding);
     res.json(buildings);
   } catch (err) {
     req.log.error({ err }, "Failed to list buildings");
@@ -56,11 +59,12 @@ router.get("/buildings", async (req, res) => {
 // GET /buildings/stats
 router.get("/buildings/stats", async (req, res) => {
   try {
-    const snap = await db.collection(COL).get();
-    const total = snap.size;
+    const { data, error } = await supabase.from("buildings").select("category");
+    if (error) throw error;
+    const total = data.length;
     const byCategory: Record<string, number> = {};
-    snap.docs.forEach((d) => {
-      const cat = d.data()["category"] as string;
+    data.forEach((row) => {
+      const cat = row.category;
       byCategory[cat] = (byCategory[cat] ?? 0) + 1;
     });
     const byCategoryArr = Object.entries(byCategory).map(([category, count]) => ({ category, count }));
@@ -76,9 +80,10 @@ router.get("/buildings/:id", async (req, res) => {
   const parsed = parseInt(String(req.params["id"] ?? ""), 10);
   if (isNaN(parsed)) { res.status(400).json({ error: "Invalid ID" }); return; }
   try {
-    const snap = await db.collection(COL).where("id", "==", parsed).limit(1).get();
-    if (snap.empty) { res.status(404).json({ error: "Building not found" }); return; }
-    res.json(docToBuilding(snap.docs[0].id, snap.docs[0].data()));
+    const { data, error } = await supabase.from("buildings").select("*").eq("id", parsed).maybeSingle();
+    if (error) throw error;
+    if (!data) { res.status(404).json({ error: "Building not found" }); return; }
+    res.json(docToBuilding(data as BuildingRow));
   } catch (err) {
     req.log.error({ err }, "Failed to get building");
     res.status(500).json({ error: "Failed to fetch building" });
@@ -93,33 +98,32 @@ router.post("/buildings", requireAdmin, async (req, res) => {
     return;
   }
   try {
-    const existing = await db.collection(COL).where("slug", "==", body.slug).limit(1).get();
-    if (!existing.empty) {
+    const { data: existing, error: lookupError } = await supabase
+      .from("buildings")
+      .select("id")
+      .eq("slug", body.slug)
+      .maybeSingle();
+    if (lookupError) throw lookupError;
+    if (existing) {
       res.status(400).json({ error: "A building with this slug already exists" });
       return;
     }
-    const id = await getNextId();
-    const now = FieldValue.serverTimestamp();
-    const data = {
-      id,
+    const { data, error } = await supabase.from("buildings").insert({
       slug: body.slug,
       name: body.name,
-      shortName: body.shortName ?? body.name,
+      short_name: body.shortName ?? body.name,
       category: body.category ?? "facility",
       description: body.description ?? "",
       floors: body.floors ?? 1,
-      floorsLocations: body.floorsLocations ?? [],
+      floors_locations: body.floorsLocations ?? ["Ground"],
       rooms: body.rooms ?? [],
       latitude: body.latitude ?? 0,
       longitude: body.longitude ?? 0,
       color: body.color ?? "#1B6B3A",
       images: body.images ?? [],
-      createdAt: now,
-      updatedAt: now,
-    };
-    const ref = await db.collection(COL).add(data);
-    const created = await ref.get();
-    res.status(201).json(docToBuilding(ref.id, { ...data, createdAt: new Date(), updatedAt: new Date() }));
+    }).select("*").single();
+    if (error) throw error;
+    res.status(201).json(docToBuilding(data as BuildingRow));
   } catch (err) {
     req.log.error({ err }, "Failed to create building");
     res.status(500).json({ error: "Failed to create building" });
@@ -131,15 +135,33 @@ router.put("/buildings/:id", requireAdmin, async (req, res) => {
   const parsed = parseInt(String(req.params["id"] ?? ""), 10);
   if (isNaN(parsed)) { res.status(400).json({ error: "Invalid ID" }); return; }
   try {
-    const snap = await db.collection(COL).where("id", "==", parsed).limit(1).get();
-    if (snap.empty) { res.status(404).json({ error: "Building not found" }); return; }
-    const docRef = snap.docs[0].ref;
-    const updates = { ...req.body, updatedAt: FieldValue.serverTimestamp() };
-    delete updates.id;
-    delete updates.createdAt;
-    await docRef.update(updates);
-    const updated = await docRef.get();
-    res.json(docToBuilding(docRef.id, updated.data()!));
+    const fieldMap: Record<string, string> = {
+      slug: "slug",
+      name: "name",
+      shortName: "short_name",
+      category: "category",
+      description: "description",
+      floors: "floors",
+      floorsLocations: "floors_locations",
+      rooms: "rooms",
+      latitude: "latitude",
+      longitude: "longitude",
+      color: "color",
+      images: "images",
+    };
+    const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    for (const [key, column] of Object.entries(fieldMap)) {
+      if (Object.hasOwn(req.body, key)) updates[column] = req.body[key];
+    }
+    const { data, error } = await supabase
+      .from("buildings")
+      .update(updates)
+      .eq("id", parsed)
+      .select("*")
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) { res.status(404).json({ error: "Building not found" }); return; }
+    res.json(docToBuilding(data as BuildingRow));
   } catch (err) {
     req.log.error({ err }, "Failed to update building");
     res.status(500).json({ error: "Failed to update building" });
@@ -151,9 +173,9 @@ router.delete("/buildings/:id", requireAdmin, async (req, res) => {
   const parsed = parseInt(String(req.params["id"] ?? ""), 10);
   if (isNaN(parsed)) { res.status(400).json({ error: "Invalid ID" }); return; }
   try {
-    const snap = await db.collection(COL).where("id", "==", parsed).limit(1).get();
-    if (snap.empty) { res.status(404).json({ error: "Building not found" }); return; }
-    await snap.docs[0].ref.delete();
+    const { data, error } = await supabase.from("buildings").delete().eq("id", parsed).select("id").maybeSingle();
+    if (error) throw error;
+    if (!data) { res.status(404).json({ error: "Building not found" }); return; }
     res.status(204).send();
   } catch (err) {
     req.log.error({ err }, "Failed to delete building");
@@ -195,19 +217,24 @@ router.post("/buildings/seed", requireAdmin, async (req, res) => {
   ];
 
   try {
-    const batch = db.batch();
-    const existing = await db.collection(COL).get();
-    existing.docs.forEach((d) => batch.delete(d.ref));
-    await batch.commit();
-
-    let nextId = 1;
-    const addBatch = db.batch();
-    for (const b of CTU_BUILDINGS) {
-      const ref = db.collection(COL).doc();
-      addBatch.set(ref, { ...b, id: nextId++, images: [], createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
-    }
-    await addBatch.commit();
-    await db.collection(META).doc(COUNTER_DOC).set({ nextId });
+    const { error: deleteError } = await supabase.from("buildings").delete().neq("id", 0);
+    if (deleteError) throw deleteError;
+    const rows = CTU_BUILDINGS.map((building) => ({
+      slug: building.slug,
+      name: building.name,
+      short_name: building.shortName,
+      category: building.category,
+      description: building.description,
+      floors: building.floors,
+      floors_locations: ["Ground"],
+      rooms: building.rooms,
+      latitude: building.latitude,
+      longitude: building.longitude,
+      color: building.color,
+      images: [],
+    }));
+    const { error: insertError } = await supabase.from("buildings").insert(rows);
+    if (insertError) throw insertError;
     res.json({ inserted: CTU_BUILDINGS.length, message: `Seeded ${CTU_BUILDINGS.length} buildings` });
   } catch (err) {
     req.log.error({ err }, "Failed to seed");

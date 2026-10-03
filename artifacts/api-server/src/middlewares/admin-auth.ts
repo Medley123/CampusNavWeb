@@ -1,6 +1,6 @@
 import { createHmac, randomBytes, scryptSync, timingSafeEqual } from "crypto";
 import type { NextFunction, Request, Response } from "express";
-import { db } from "../lib/firebase.js";
+import { supabase } from "../lib/supabase.js";
 
 const COOKIE_NAME = "campusnav_admin_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 8;
@@ -16,8 +16,6 @@ export type AdminAccount = {
   passwordHash: string;
   passwordSalt: string;
 };
-
-const ADMIN_DOC = db.collection("settings").doc("admin");
 
 function getSecret() {
   const secret = process.env["ADMIN_SESSION_SECRET"];
@@ -100,8 +98,20 @@ function isValidPassword(password: string, account: AdminAccount) {
 }
 
 export async function getAdminAccount() {
-  const snapshot = await ADMIN_DOC.get();
-  if (snapshot.exists) return snapshot.data() as AdminAccount;
+  const { data, error } = await supabase
+    .from("admin_settings")
+    .select("email, name, password_hash, password_salt")
+    .eq("id", 1)
+    .maybeSingle();
+  if (error) throw error;
+  if (data) {
+    return {
+      email: data.email,
+      name: data.name,
+      passwordHash: data.password_hash,
+      passwordSalt: data.password_salt,
+    } as AdminAccount;
+  }
 
   const email = process.env["ADMIN_USERNAME"] || "";
   const password = process.env["ADMIN_PASSWORD"] || "";
@@ -114,7 +124,14 @@ export async function getAdminAccount() {
     passwordHash: "",
   };
   account.passwordHash = hashPassword(password, account.passwordSalt);
-  await ADMIN_DOC.set(account);
+  const { error: insertError } = await supabase.from("admin_settings").insert({
+    id: 1,
+    email: account.email,
+    name: account.name,
+    password_hash: account.passwordHash,
+    password_salt: account.passwordSalt,
+  });
+  if (insertError) throw insertError;
   return account;
 }
 
@@ -127,13 +144,24 @@ export async function verifyAdminCredentials(email: string, password: string) {
 export async function updateAdminAccount(input: { email?: string; name?: string; password?: string }) {
   const current = await getAdminAccount();
   if (!current) throw new Error("Admin account is not configured.");
-  const update: Partial<AdminAccount> = {};
+  const update: Record<string, string> = {};
   if (input.email) update.email = input.email;
   if (input.name) update.name = input.name;
   if (input.password) {
-    update.passwordSalt = randomBytes(16).toString("hex");
-    update.passwordHash = hashPassword(input.password, update.passwordSalt);
+    update.password_salt = randomBytes(16).toString("hex");
+    update.password_hash = hashPassword(input.password, update.password_salt);
   }
-  await ADMIN_DOC.set(update, { merge: true });
-  return { ...current, ...update };
+  const { data, error } = await supabase
+    .from("admin_settings")
+    .update(update)
+    .eq("id", 1)
+    .select("email, name, password_hash, password_salt")
+    .single();
+  if (error) throw error;
+  return {
+    email: data.email,
+    name: data.name,
+    passwordHash: data.password_hash,
+    passwordSalt: data.password_salt,
+  } as AdminAccount;
 }

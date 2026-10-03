@@ -1,6 +1,5 @@
 import { Router } from "express";
-import { FieldValue } from "firebase-admin/firestore";
-import { db } from "../lib/firebase.js";
+import { supabase } from "../lib/supabase.js";
 import { requireAdmin } from "../middlewares/admin-auth.js";
 
 const router = Router();
@@ -18,18 +17,19 @@ router.post("/users", async (req, res) => {
   }
 
   try {
-    const ref = db.collection(COL).doc(encodeURIComponent(email));
-    await ref.set(
-      {
+    const { data, error } = await supabase
+      .from("users")
+      .upsert({
         email,
         username,
         name: name || username,
-        ...(picture ? { picture } : {}),
-        lastLoginAt: FieldValue.serverTimestamp(),
-      },
-      { merge: true },
-    );
-    res.status(200).json({ id: ref.id, email, username, name: name || username, picture });
+        picture: picture ?? null,
+        last_login_at: new Date().toISOString(),
+      }, { onConflict: "email" })
+      .select("email, username, name, picture")
+      .single();
+    if (error) throw error;
+    res.status(200).json({ id: data.email, ...data });
   } catch (err) {
     req.log.error({ err }, "Failed to save user");
     res.status(500).json({ error: "Failed to save user profile." });
@@ -38,18 +38,19 @@ router.post("/users", async (req, res) => {
 
 router.get("/users", requireAdmin, async (req, res) => {
   try {
-    const snap = await db.collection(COL).orderBy("lastLoginAt", "desc").get();
-    res.json(snap.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        email: data["email"] as string,
-        username: data["username"] as string,
-        name: data["name"] as string,
-        picture: data["picture"] as string | undefined,
-        lastLoginAt: data["lastLoginAt"]?.toDate?.()?.toISOString() ?? null,
-      };
-    }));
+    const { data, error } = await supabase
+      .from("users")
+      .select("email, username, name, picture, last_login_at")
+      .order("last_login_at", { ascending: false });
+    if (error) throw error;
+    res.json(data.map((user) => ({
+      id: user.email,
+      email: user.email,
+      username: user.username,
+      name: user.name,
+      picture: user.picture ?? undefined,
+      lastLoginAt: user.last_login_at,
+    })));
   } catch (err) {
     req.log.error({ err }, "Failed to list users");
     res.status(500).json({ error: "Failed to fetch users." });
