@@ -28,7 +28,7 @@ function GoogleSignInButton({
   onError,
 }: {
   disabled: boolean;
-  onProfile: (profile: { email: string; name: string; picture?: string }) => void;
+  onProfile: (profile: { email: string; name: string; picture?: string }, accessToken: string) => void;
   onError: (message: string) => void;
 }) {
   const [request, response, promptAsync] = Google.useAuthRequest({
@@ -62,7 +62,7 @@ function GoogleSignInButton({
           email: profile.email,
           name: profile.name || profile.email.split("@")[0],
           picture: profile.picture,
-        });
+        }, accessToken);
       })
       .catch((reason: unknown) => {
         onError(reason instanceof Error ? reason.message : "Google sign-in failed.");
@@ -88,12 +88,47 @@ export default function LoginScreen() {
     name: string;
     picture?: string;
   } | null>(null);
+  const [googleAccessToken, setGoogleAccessToken] = useState<string | null>(null);
   const [username, setUsername] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const handleGoogleProfile = async (
+    profile: { email: string; name: string; picture?: string },
+    accessToken: string,
+  ) => {
+    setBusy(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API_URL.replace(/\/$/, "")}/api/users/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accessToken }),
+      });
+      const data = await response.json().catch(() => null);
+
+      if (response.status === 404) {
+        setGoogleProfile(profile);
+        setGoogleAccessToken(accessToken);
+        return;
+      }
+      if (!response.ok) throw new Error(data?.error || "Could not sign in with Google.");
+
+      await signIn({
+        email: data.email,
+        name: data.name,
+        username: data.username,
+        picture: data.picture ?? profile.picture,
+      });
+    } catch (reason: unknown) {
+      setError(reason instanceof Error ? reason.message : "Could not sign in with Google.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const finishRegistration = async () => {
-    if (!googleProfile || username.trim().length < 3) {
+    if (!googleProfile || !googleAccessToken || username.trim().length < 3) {
       setError("Username must be at least 3 characters.");
       return;
     }
@@ -107,11 +142,16 @@ export default function LoginScreen() {
       const response = await fetch(`${API_URL.replace(/\/$/, "")}/api/users`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...googleProfile, username: username.trim() }),
+        body: JSON.stringify({ accessToken: googleAccessToken, username: username.trim() }),
       });
       const data = await response.json().catch(() => null);
       if (!response.ok) throw new Error(data?.error || "Could not save your profile.");
-      await signIn({ ...googleProfile, username: username.trim() });
+      await signIn({
+        email: data.email,
+        name: data.name || googleProfile.name,
+        username: data.username,
+        picture: data.picture ?? googleProfile.picture,
+      });
     } catch (reason: unknown) {
       setError(reason instanceof Error ? reason.message : "Could not save your profile.");
     } finally {
@@ -157,10 +197,7 @@ export default function LoginScreen() {
           GOOGLE_CLIENT_ID ? (
             <GoogleSignInButton
               disabled={busy}
-              onProfile={(profile) => {
-                setGoogleProfile(profile);
-                setBusy(false);
-              }}
+              onProfile={handleGoogleProfile}
               onError={(message) => {
                 setError(message);
                 setBusy(false);
@@ -171,7 +208,7 @@ export default function LoginScreen() {
 
         {error && <Text style={styles.error}>{error}</Text>}
         {!GOOGLE_CLIENT_ID && <Text style={[styles.hint, { color: colors.mutedForeground }]}>Set EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID to enable Google Sign-In.</Text>}
-        <Text style={[styles.footer, { color: colors.mutedForeground }]}>Only @gmail.com accounts are accepted.</Text>
+        <Text style={[styles.footer, { color: colors.mutedForeground }]}>Continue with Google.</Text>
       </View>
     </KeyboardAvoidingView>
   );
