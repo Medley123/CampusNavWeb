@@ -36,16 +36,18 @@ function GoogleSignInButton({
     iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
     androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
   });
+  const callbacks = React.useRef({ onProfile, onError });
+  callbacks.current = { onProfile, onError };
 
   useEffect(() => {
     if (response?.type !== "success") {
-      if (response?.type === "error") onError("Google sign-in was cancelled or failed.");
+      if (response?.type === "error") callbacks.current.onError("Google sign-in was cancelled or failed.");
       return;
     }
 
     const accessToken = response.authentication?.accessToken;
     if (!accessToken) {
-      onError("Google did not return an access token.");
+      callbacks.current.onError("Google did not return an access token.");
       return;
     }
 
@@ -58,16 +60,16 @@ function GoogleSignInButton({
         if (!profile.email?.toLowerCase().endsWith("@gmail.com")) {
           throw new Error("Only Gmail accounts are allowed.");
         }
-        onProfile({
+        callbacks.current.onProfile({
           email: profile.email,
           name: profile.name || profile.email.split("@")[0],
           picture: profile.picture,
         }, accessToken);
       })
       .catch((reason: unknown) => {
-        onError(reason instanceof Error ? reason.message : "Google sign-in failed.");
+        callbacks.current.onError(reason instanceof Error ? reason.message : "Google sign-in failed.");
       });
-  }, [response, onError, onProfile]);
+  }, [response]);
 
   return (
     <Pressable

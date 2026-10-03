@@ -1,6 +1,6 @@
 # Google Sign-In Setup
 
-CampusNav accepts Google accounts ending in `@gmail.com` and asks each user to choose a username after sign-in.
+CampusNav accepts verified Google accounts ending in `@gmail.com`. New users choose a username once; returning users sign in with the same Google account and keep their registered username.
 
 ## OAuth client IDs
 
@@ -20,4 +20,4 @@ EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID=your-ios-client-id.apps.googleusercontent.com
 
 For web development, add the Expo redirect URI shown by AuthSession to the OAuth client's authorized redirect URIs. Restart Expo after changing environment variables.
 
-The current implementation persists the signed-in profile locally with AsyncStorage. A backend user profile collection can be added later if usernames need to be shared across devices.
+The app sends the Google access token to the API, which verifies the account with Google and looks up the Gmail in Supabase. Existing accounts are signed in directly. New accounts are asked to choose a username, which is saved to Supabase. Configure `EXPO_PUBLIC_API_URL` to point to the API server before starting the app.
