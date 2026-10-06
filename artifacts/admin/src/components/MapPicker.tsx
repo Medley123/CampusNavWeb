@@ -2,12 +2,6 @@ import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-const CTU_CENTER: [number, number] = [10.50338, 124.02916];
-const CTU_BOUNDS = L.latLngBounds(
-  L.latLng(10.5020, 124.0265),
-  L.latLng(10.5048, 124.0318)
-);
-
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
@@ -31,10 +25,9 @@ export default function MapPicker({ latitude, longitude, color = "#800000", onCh
     if (!containerRef.current || mapRef.current) return;
 
     const map = L.map(containerRef.current, {
-      center: CTU_CENTER,
+      center: [latitude, longitude],
       zoom: 17,
-      maxBounds: CTU_BOUNDS.pad(0.2),
-      minZoom: 15,
+      minZoom: 12,
       maxZoom: 19,
     });
 

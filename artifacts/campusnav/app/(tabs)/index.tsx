@@ -7,13 +7,13 @@ import {
   useWindowDimensions,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
 import MapView, {
   Marker,
-  Overlay,
   Polyline,
   PROVIDER_DEFAULT,
 } from "react-native-maps";
@@ -29,6 +29,7 @@ import {
   getCategoryLabel,
   type FloorLevel,
 } from "@/constants/buildings";
+import { CTU_CAMPUSES, DEFAULT_CAMPUS, getCampusRegion, type CampusCategory, type CampusLocation } from "@/constants/campuses";
 import { useLocation } from "@/hooks/useLocation";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/hooks/useAuth";
@@ -40,11 +41,6 @@ const MIN_LAT = 10.5022;
 const MAX_LAT = 10.5046;
 const MIN_LNG = 124.0270;
 const MAX_LNG = 124.0313;
-
-const BOUND_MIN_LAT = 10.4990;
-const BOUND_MAX_LAT = 10.5080;
-const BOUND_MIN_LNG = 124.0230;
-const BOUND_MAX_LNG = 124.0360;
 
 function getBuildingPosition(lat: number, lng: number) {
   const x = ((lng - MIN_LNG) / (MAX_LNG - MIN_LNG)) * 100;
@@ -170,13 +166,14 @@ function WebCampusMap({
 export default function MapScreen() {
   const colors = useColors();
   const { signOut, user } = useAuth();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isMobile = width < 768;
   useActiveUsers(user?.username);
   const insets = useSafeAreaInsets();
   const mapRef = useRef<MapView>(null);
   const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
-  const showMapImage = true;
+  const [selectedCampus, setSelectedCampus] = useState<CampusLocation>(DEFAULT_CAMPUS);
+  const [campusMenuOpen, setCampusMenuOpen] = useState(false);
   const [navTarget, setNavTarget] = useState<Building | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [currentFloor, setCurrentFloor] = useState<FloorLevel>("Ground");
@@ -196,9 +193,15 @@ export default function MapScreen() {
     }
     return building.floorsLocations.includes(currentFloor);
   });
+  const campusBuildings = filteredBuildings.filter((building) => building.campusName === selectedCampus.name);
 
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const topPad = Platform.OS === "web" ? 40 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
+  const campusMenuTop = topPad + (isWeb ? 0 : 12) + 118;
+  const campusMenuMaxHeight = Math.max(
+    140,
+    Math.min(460, height - campusMenuTop - bottomPad - 116),
+  );
 
   const distanceMeters =
     navTarget && location.coords
@@ -276,10 +279,7 @@ export default function MapScreen() {
     } else {
       location.requestLocation();
       if (!isWeb) {
-        mapRef.current?.animateToRegion(
-          { latitude: 10.50338, longitude: 124.02916, latitudeDelta: 0.0028, longitudeDelta: 0.0048 },
-          500
-        );
+        mapRef.current?.animateToRegion(getCampusRegion(selectedCampus), 500);
       }
     }
   };
@@ -291,30 +291,12 @@ export default function MapScreen() {
   refetch();
 
   if (!isWeb) {
-    mapRef.current?.animateToRegion(CAMPUS_REGION, 500);
+    mapRef.current?.animateToRegion(getCampusRegion(selectedCampus), 500);
   }
 
   setSelectedBuilding(null);
   setNavTarget(null);
 };
-
-  const handleRegionChangeComplete = (region: {
-    latitude: number;
-    longitude: number;
-    latitudeDelta: number;
-    longitudeDelta: number;
-  }) => {
-    const outOfBounds =
-      region.latitude < BOUND_MIN_LAT ||
-      region.latitude > BOUND_MAX_LAT ||
-      region.longitude < BOUND_MIN_LNG ||
-      region.longitude > BOUND_MAX_LNG ||
-      region.latitudeDelta > 0.015;
-
-    if (outOfBounds) {
-      mapRef.current?.animateToRegion(CAMPUS_REGION, 400);
-    }
-  };
 
   const handleDirections = (building: Building) => {
     if (Platform.OS === "web") {
@@ -394,26 +376,21 @@ export default function MapScreen() {
       <MapView
         ref={mapRef}
         style={styles.map}
-        initialRegion={CAMPUS_REGION}
+        initialRegion={getCampusRegion(selectedCampus)}
         provider={PROVIDER_DEFAULT}
         showsUserLocation={!!location.coords}
         showsMyLocationButton={false}
         showsCompass={false}
-        minZoomLevel={15}
+        minZoomLevel={12}
         maxZoomLevel={20}
         onPress={() => setSelectedBuilding(null)}
-        onRegionChangeComplete={handleRegionChangeComplete}
       >
-          {showMapImage && (
-            <Overlay
-              bounds={[
-                [MIN_LAT, MIN_LNG],
-                [MAX_LAT, MAX_LNG],
-              ]}
-              image={CAMPUS_MAP_IMAGE}
-              opacity={0.85}
-            />
-          )}
+          <Marker
+            coordinate={{ latitude: selectedCampus.latitude, longitude: selectedCampus.longitude }}
+            title={selectedCampus.name}
+            description={`${selectedCampus.category} campus`}
+            pinColor={colors.primary}
+          />
 
           {/* Route line when navigating */}
           {isNavigating && location.coords && (
@@ -434,7 +411,7 @@ export default function MapScreen() {
             />
           )}
 
-          {filteredBuildings.map((building) => (
+          {campusBuildings.map((building) => (
             <Marker
               key={building.id}
               coordinate={{
@@ -481,7 +458,7 @@ export default function MapScreen() {
         <View
           style={[
             styles.navBanner,
-            { top: topPad + (isWeb ? 0 : 12) + 70, backgroundColor: colors.primary },
+            { top: topPad + (isWeb ? 0 : 12) + 118, backgroundColor: colors.primary },
           ]}
           pointerEvents="none"
         >
@@ -512,9 +489,6 @@ export default function MapScreen() {
           <View>
             <Text style={[styles.appName, { color: colors.foreground }]}>
               CampusNav 
-            </Text>
-            <Text style={[styles.campusName, { color: colors.mutedForeground }]}>
-              {isNavigating ? `→ ${navTarget?.name}` : "CTU Danao Campus"}
             </Text>
           </View>
         </View>
@@ -580,6 +554,92 @@ export default function MapScreen() {
         </View>
       </View>
 
+      <Pressable
+        accessibilityLabel="Choose CTU campus"
+        accessibilityRole="button"
+        onPress={() => setCampusMenuOpen((open) => !open)}
+        style={({ pressed }) => [
+          styles.campusSelector,
+          {
+            top: topPad + (isWeb ? 0 : 12) + 66,
+            backgroundColor: colors.card,
+            borderColor: colors.border,
+          },
+          pressed && { opacity: 0.85 },
+        ]}
+      >
+        <Feather name="map-pin" size={15} color={colors.primary} />
+        <Text style={[styles.campusName, { color: colors.foreground }]} numberOfLines={1}>
+          {selectedCampus.name}
+        </Text>
+        <Feather name={campusMenuOpen ? "chevron-up" : "chevron-down"} size={16} color={colors.mutedForeground} />
+      </Pressable>
+
+      {campusMenuOpen && (
+        <>
+          <Pressable
+            accessibilityLabel="Close campus selector"
+            onPress={() => setCampusMenuOpen(false)}
+            style={styles.campusMenuBackdrop}
+          />
+          <View
+            style={[
+              styles.campusMenu,
+              {
+                top: campusMenuTop,
+                maxHeight: campusMenuMaxHeight,
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <ScrollView
+              style={[styles.campusMenuScroll, { maxHeight: campusMenuMaxHeight - 48 }]}
+              contentContainerStyle={styles.campusMenuContent}
+              showsVerticalScrollIndicator
+            >
+              {(["Main", "Satellite", "Extension"] as CampusCategory[]).map((category) => (
+                <View key={category}>
+                  <Text style={[styles.campusMenuGroupTitle, { color: colors.mutedForeground }]}>
+                    {category}
+                  </Text>
+                  {CTU_CAMPUSES.filter((campus) => campus.category === category).map((campus) => (
+                    <Pressable
+                      key={campus.id}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: campus.id === selectedCampus.id }}
+                      onPress={() => {
+                        setSelectedCampus(campus);
+                        setCampusMenuOpen(false);
+                        setSelectedBuilding(null);
+                        setNavTarget(null);
+                        mapRef.current?.animateToRegion(getCampusRegion(campus), 500);
+                      }}
+                      style={({ pressed }) => [
+                        styles.campusMenuOption,
+                        { backgroundColor: campus.id === selectedCampus.id ? colors.primaryLight : "transparent" },
+                        pressed && { opacity: 0.65 },
+                      ]}
+                    >
+                      <Text
+                        style={[styles.campusMenuOptionText, { color: campus.id === selectedCampus.id ? colors.primary : colors.foreground }]}
+                        numberOfLines={1}
+                      >
+                        {campus.name}
+                      </Text>
+                      {campus.id === selectedCampus.id && <Feather name="check" size={15} color={colors.primary} />}
+                    </Pressable>
+                  ))}
+                </View>
+              ))}
+            </ScrollView>
+            <Text style={[styles.campusAttribution, { color: colors.mutedForeground }]}>
+              CTU Campuses locations © OpenStreetMap contributors and Google Maps
+            </Text>
+          </View>
+        </>
+      )}
+
       {menuOpen && isMobile && (
         <>
           <Pressable
@@ -591,7 +651,7 @@ export default function MapScreen() {
             style={[
               styles.accountMenu,
               {
-                top: topPad + (isWeb ? 0 : 12) + 58,
+                top: topPad + (isWeb ? 0 : 12) + 120,
                 backgroundColor: colors.card,
                 borderColor: colors.border,
               },
@@ -677,7 +737,9 @@ export default function MapScreen() {
           ]}
         >
           <Feather name="map-pin" size={12} color="#fff" />
-          <Text style={styles.badgeText}>{buildings.length} locations</Text>
+          <Text style={styles.badgeText}>
+            {campusBuildings.length > 0 ? `${campusBuildings.length} locations` : "Campus location"}
+          </Text>
         </View>
       )}
 
@@ -849,8 +911,23 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_700Bold",
   },
   campusName: {
+    flex: 1,
+    minWidth: 0,
     fontSize: 11,
     fontFamily: "Inter_400Regular",
+  },
+  campusSelector: {
+    position: "absolute",
+    left: 16,
+    right: 16,
+    height: 46,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 9,
+    paddingHorizontal: 13,
+    borderWidth: 1,
+    borderRadius: 12,
+    zIndex: 40,
   },
   resetBtn: {
     width: 36,
@@ -862,6 +939,58 @@ const styles = StyleSheet.create({
   menuBackdrop: {
     ...StyleSheet.absoluteFill,
     zIndex: 90,
+  },
+  campusMenuBackdrop: {
+    ...StyleSheet.absoluteFill,
+    zIndex: 80,
+  },
+  campusMenu: {
+    position: "absolute",
+    left: 16,
+    right: 16,
+    maxHeight: 460,
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 8,
+    zIndex: 100,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  campusMenuScroll: {
+    flexShrink: 1,
+  },
+  campusMenuContent: {
+    paddingBottom: 14,
+  },
+  campusMenuGroupTitle: {
+    fontSize: 11,
+    fontFamily: "Inter_700Bold",
+    textTransform: "uppercase",
+    paddingHorizontal: 10,
+    paddingTop: 10,
+    paddingBottom: 4,
+  },
+  campusMenuOption: {
+    minHeight: 40,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  campusMenuOptionText: {
+    flex: 1,
+    fontSize: 13,
+    fontFamily: "Inter_500Medium",
+  },
+  campusAttribution: {
+    fontSize: 9,
+    textAlign: "center",
+    paddingTop: 8,
   },
   accountMenu: {
     position: "absolute",

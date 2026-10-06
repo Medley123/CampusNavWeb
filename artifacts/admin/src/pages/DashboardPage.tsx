@@ -1,9 +1,8 @@
-import { Building2, ChevronRight, Users } from "lucide-react";
+import { Building2, ChevronRight } from "lucide-react";
 import { Link } from "wouter";
 import { useListBuildings, useGetBuildingStats } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useActiveUserNames, useActiveUsers } from "@/hooks/use-active-users";
 
 const CATEGORY_STYLES: Record<string, string> = {
   academic: "bg-blue-100 text-blue-800",
@@ -12,9 +11,7 @@ const CATEGORY_STYLES: Record<string, string> = {
   sports: "bg-purple-100 text-purple-800",
 };
 
-export default function DashboardPage() {
-  const activeUsers = useActiveUsers();
-  const activeUserNames = useActiveUserNames();
+export default function DashboardPage({ campusName }: { campusName: string | null }) {
   const { data: buildings = [], isLoading: buildingsLoading } = useListBuildings();
   const { data: stats, isLoading: statsLoading } = useGetBuildingStats();
 
@@ -26,7 +23,7 @@ export default function DashboardPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-bold text-foreground sm:text-2xl">Dashboard</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">CampusNav overview for CTU Danao Campus</p>
+          <p className="text-muted-foreground text-sm mt-0.5">CampusNav overview for {campusName || "your campus"}</p>
         </div>
         <Link href="/buildings">
           <Button size="sm" className="gap-2">
@@ -36,7 +33,7 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2">
         <Card className="shadow-sm">
           <CardContent className="p-5 flex items-center justify-between">
             <div>
@@ -49,17 +46,6 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
         <Card className="shadow-sm">
-          <CardContent className="p-5 flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Active Users</p>
-              <p className="text-3xl font-bold mt-1">{activeUsers === null ? "-" : activeUsers}</p>
-            </div>
-            <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
-              <Users className="w-6 h-6" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="shadow-sm sm:col-span-2 lg:col-span-1">
           <CardContent className="p-5">
             <p className="text-sm text-muted-foreground">Building Categories</p>
             <div className="flex flex-wrap gap-2 mt-3">
@@ -75,25 +61,6 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-
-      <Card className="shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-lg">Online Now</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {activeUserNames.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No registered users are currently online.</p>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {activeUserNames.map((username) => (
-                <span key={username} className="rounded-full bg-emerald-100 px-3 py-1 text-sm font-medium text-emerald-800">
-                  @{username}
-                </span>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
       <Card className="shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between space-y-0">

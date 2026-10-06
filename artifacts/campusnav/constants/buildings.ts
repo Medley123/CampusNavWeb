@@ -4,6 +4,7 @@ export type FloorLevel = "Ground" | "2F" | "3F" | "4F";
 export interface Building {
   id: string;
   name: string;
+  campusName: string;
   shortName: string;
   category: BuildingCategory;
   description: string;

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { requireAdmin } from "../middlewares/admin-auth.js";
+import { getAdminAccount, getAdminSession, requireAdmin, type AdminAccount } from "../middlewares/admin-auth.js";
 import { supabase } from "../lib/supabase.js";
 
 const router = Router();
@@ -7,6 +7,7 @@ type BuildingRow = {
   id: number;
   slug: string;
   name: string;
+  campus_name: string;
   short_name: string;
   category: string;
   description: string;
@@ -26,6 +27,7 @@ function docToBuilding(data: BuildingRow) {
     id: data.id,
     slug: data.slug,
     name: data.name,
+    campusName: data.campus_name,
     shortName: data.short_name,
     category: data.category,
     description: data.description,
@@ -46,7 +48,13 @@ function docToBuilding(data: BuildingRow) {
 // GET /buildings
 router.get("/buildings", async (req, res) => {
   try {
-    const { data, error } = await supabase.from("buildings").select("*").order("name");
+    const session = getAdminSession(req);
+    const account = session ? await getAdminAccount(session.username) : null;
+    let query = supabase.from("buildings").select("*");
+    if (account?.isActive && account.role === "campus_admin" && account.campusName) {
+      query = query.eq("campus_name", account.campusName);
+    }
+    const { data, error } = await query.order("name");
     if (error) throw error;
     const buildings = (data as BuildingRow[]).map(docToBuilding);
     res.json(buildings);
@@ -57,9 +65,14 @@ router.get("/buildings", async (req, res) => {
 });
 
 // GET /buildings/stats
-router.get("/buildings/stats", async (req, res) => {
+router.get("/buildings/stats", requireAdmin, async (req, res) => {
   try {
-    const { data, error } = await supabase.from("buildings").select("category");
+    const account = res.locals.adminAccount as AdminAccount;
+    let query = supabase.from("buildings").select("category");
+    if (account.role === "campus_admin" && account.campusName) {
+      query = query.eq("campus_name", account.campusName);
+    }
+    const { data, error } = await query;
     if (error) throw error;
     const total = data.length;
     const byCategory: Record<string, number> = {};
@@ -93,8 +106,14 @@ router.get("/buildings/:id", async (req, res) => {
 // POST /buildings
 router.post("/buildings", requireAdmin, async (req, res) => {
   const body = req.body;
+  const account = res.locals.adminAccount as AdminAccount;
+  const campusName = account.role === "campus_admin" ? account.campusName : body?.campusName;
   if (!body?.name || !body?.slug) {
     res.status(400).json({ error: "name and slug are required" });
+    return;
+  }
+  if (!campusName) {
+    res.status(400).json({ error: "A campus is required for this building." });
     return;
   }
   try {
@@ -111,6 +130,7 @@ router.post("/buildings", requireAdmin, async (req, res) => {
     const { data, error } = await supabase.from("buildings").insert({
       slug: body.slug,
       name: body.name,
+      campus_name: campusName,
       short_name: body.shortName ?? body.name,
       category: body.category ?? "facility",
       description: body.description ?? "",
@@ -135,9 +155,11 @@ router.put("/buildings/:id", requireAdmin, async (req, res) => {
   const parsed = parseInt(String(req.params["id"] ?? ""), 10);
   if (isNaN(parsed)) { res.status(400).json({ error: "Invalid ID" }); return; }
   try {
+    const account = res.locals.adminAccount as AdminAccount;
     const fieldMap: Record<string, string> = {
       slug: "slug",
       name: "name",
+      campusName: "campus_name",
       shortName: "short_name",
       category: "category",
       description: "description",
@@ -151,14 +173,15 @@ router.put("/buildings/:id", requireAdmin, async (req, res) => {
     };
     const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
     for (const [key, column] of Object.entries(fieldMap)) {
-      if (Object.hasOwn(req.body, key)) updates[column] = req.body[key];
+      if (Object.hasOwn(req.body, key) && (key !== "campusName" || account.role === "super_admin")) {
+        updates[column] = req.body[key];
+      }
     }
-    const { data, error } = await supabase
-      .from("buildings")
-      .update(updates)
-      .eq("id", parsed)
-      .select("*")
-      .maybeSingle();
+    let query = supabase.from("buildings").update(updates).eq("id", parsed);
+    if (account.role === "campus_admin" && account.campusName) {
+      query = query.eq("campus_name", account.campusName);
+    }
+    const { data, error } = await query.select("*").maybeSingle();
     if (error) throw error;
     if (!data) { res.status(404).json({ error: "Building not found" }); return; }
     res.json(docToBuilding(data as BuildingRow));
@@ -173,7 +196,12 @@ router.delete("/buildings/:id", requireAdmin, async (req, res) => {
   const parsed = parseInt(String(req.params["id"] ?? ""), 10);
   if (isNaN(parsed)) { res.status(400).json({ error: "Invalid ID" }); return; }
   try {
-    const { data, error } = await supabase.from("buildings").delete().eq("id", parsed).select("id").maybeSingle();
+    const account = res.locals.adminAccount as AdminAccount;
+    let query = supabase.from("buildings").delete().eq("id", parsed);
+    if (account.role === "campus_admin" && account.campusName) {
+      query = query.eq("campus_name", account.campusName);
+    }
+    const { data, error } = await query.select("id").maybeSingle();
     if (error) throw error;
     if (!data) { res.status(404).json({ error: "Building not found" }); return; }
     res.status(204).send();
@@ -185,6 +213,11 @@ router.delete("/buildings/:id", requireAdmin, async (req, res) => {
 
 // POST /buildings/seed
 router.post("/buildings/seed", requireAdmin, async (req, res) => {
+  const account = res.locals.adminAccount as AdminAccount;
+  if (account.role === "campus_admin" && account.campusName !== "CTU Danao Campus") {
+    res.status(403).json({ error: "The built-in seed data is only available for CTU Danao Campus." });
+    return;
+  }
   const CTU_BUILDINGS = [
     { slug: "coe", name: "College of Engineering", shortName: "COE", category: "academic", description: "The College of Engineering offering courses in civil, electrical, and mechanical engineering.", floors: 3, rooms: ["CE Lab", "EE Lab", "ME Lab", "Lecture Hall 1", "Lecture Hall 2", "Faculty Room"], latitude: 10.5038, longitude: 124.02965, color: "#D44E2A" },
     { slug: "cme", name: "College of Maritime Education", shortName: "CME", category: "academic", description: "Offering maritime-related courses for future seafarers and marine professionals.", floors: 3, rooms: ["Navigation Lab", "Engine Room Simulator", "Lecture Hall", "Faculty Room"], latitude: 10.50375, longitude: 124.0293, color: "#2A5DA4" },
@@ -217,11 +250,12 @@ router.post("/buildings/seed", requireAdmin, async (req, res) => {
   ];
 
   try {
-    const { error: deleteError } = await supabase.from("buildings").delete().neq("id", 0);
+    const { error: deleteError } = await supabase.from("buildings").delete().eq("campus_name", "CTU Danao Campus");
     if (deleteError) throw deleteError;
     const rows = CTU_BUILDINGS.map((building) => ({
       slug: building.slug,
       name: building.name,
+      campus_name: "CTU Danao Campus",
       short_name: building.shortName,
       category: building.category,
       description: building.description,

@@ -9,9 +9,9 @@ import NotFound from "@/pages/not-found";
 import BuildingsPage from "@/pages/BuildingsPage";
 import { LayoutDashboard, Building2, ChevronRight, Users, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useActiveUsers } from "@/hooks/use-active-users";
 import UsersPage from "@/pages/UsersPage";
 import DashboardOverview from "@/pages/DashboardPage";
+import AdminAccountsPage from "@/pages/AdminAccountsPage";
 import AdminLoginPage from "@/pages/AdminLoginPage";
 import { AdminAuthProvider, useAdminAuth } from "@/hooks/use-admin-auth";
 import AdminSettingsPage from "@/pages/AdminSettingsPage";
@@ -42,8 +42,7 @@ function NavItem({ href, icon: Icon, label, onNavigate }: { href: string; icon: 
 }
 
 function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const activeUsers = useActiveUsers();
-  const { username, name, logout } = useAdminAuth();
+  const { username, name, logout, role, campusName } = useAdminAuth();
   const { resolvedTheme, setTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
 
@@ -86,28 +85,17 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
       </div>
       <nav className="flex-1 px-3 py-4 space-y-1">
         <p className="px-4 text-xs font-semibold text-sidebar-foreground/40 uppercase tracking-wider mb-2">Navigation</p>
-        <NavItem href="/" icon={LayoutDashboard} label="Dashboard" onNavigate={onClose} />
-        <NavItem href="/buildings" icon={Building2} label="Buildings" onNavigate={onClose} />
-        <NavItem href="/users" icon={Users} label="Users" onNavigate={onClose} />
-        <NavItem href="/settings" icon={Settings} label="Settings" onNavigate={onClose} />
+        {role === "super_admin" ? (
+          <NavItem href="/" icon={Building2} label="Campus Admins" onNavigate={onClose} />
+        ) : (
+          <>
+            <NavItem href="/" icon={LayoutDashboard} label="Dashboard" onNavigate={onClose} />
+            <NavItem href="/buildings" icon={Building2} label="Buildings" onNavigate={onClose} />
+            <NavItem href="/users" icon={Users} label="Users" onNavigate={onClose} />
+            <NavItem href="/settings" icon={Settings} label="Settings" onNavigate={onClose} />
+          </>
+        )}
       </nav>
-
-      {/* Live active users */}
-      <div className="px-3 pb-3">
-        <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[#800000]/15 border border-[#800000]/30">
-          <div className="relative flex-shrink-0">
-            <Users className="w-4 h-4 text-[#800000] dark:text-red-300" />
-            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#800000] dark:bg-red-300 animate-pulse" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[#800000] dark:text-red-200 text-xs font-medium leading-none">Active Users</p>
-            <p className="text-[#800000] dark:text-red-100 text-lg font-bold mt-0.5 leading-none">
-              {activeUsers === null ? "—" : activeUsers}
-            </p>
-          </div>
-          <span className="text-[#800000] dark:text-red-300 text-xs">live</span>
-        </div>
-      </div>
 
       <div className="px-5 py-4 border-t border-sidebar-border">
         <div className="mb-3 flex items-center justify-between gap-2">
@@ -125,7 +113,7 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
             <LogOut className="h-4 w-4" />
           </button>
         </div>
-        <p className="text-sidebar-foreground/30 text-xs">CTU Danao Campus</p>
+        <p className="text-sidebar-foreground/30 text-xs">{campusName || "Systemwide access"}</p>
         <p className="text-sidebar-foreground/20 text-xs">v1.0.0</p>
       </div>
     </aside>
@@ -133,9 +121,10 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
 }
 
 function DashboardPage() {
+  const { campusName } = useAdminAuth();
   return (
     <div className="flex-1 min-h-screen">
-      <DashboardOverview />
+      <DashboardOverview campusName={campusName} />
     </div>
   );
 }
@@ -173,13 +162,15 @@ function AppLayout({ children }: { children: ReactNode }) {
 }
 
 function Router() {
+  const { role } = useAdminAuth();
   return (
     <AppLayout>
       <Switch>
-        <Route path="/" component={DashboardPage} />
-        <Route path="/buildings" component={BuildingsPage} />
-        <Route path="/users" component={UsersPage} />
-        <Route path="/settings" component={AdminSettingsPage} />
+        <Route path="/" component={role === "super_admin" ? AdminAccountsPage : DashboardPage} />
+        <Route path="/admins" component={role === "super_admin" ? AdminAccountsPage : NotFound} />
+        <Route path="/buildings" component={role === "campus_admin" ? BuildingsPage : NotFound} />
+        <Route path="/users" component={role === "campus_admin" ? UsersPage : NotFound} />
+        <Route path="/settings" component={role === "campus_admin" ? AdminSettingsPage : NotFound} />
         <Route component={NotFound} />
       </Switch>
     </AppLayout>

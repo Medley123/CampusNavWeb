@@ -32,6 +32,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Building2, Plus, Search, Pencil, Trash2, GraduationCap, ShieldCheck, Landmark, Trophy } from "lucide-react";
 import BuildingFormModal from "@/components/BuildingFormModal";
+import { useAdminAuth } from "@/hooks/use-admin-auth";
 
 const CATEGORY_COLORS: Record<string, string> = {
   academic: "bg-blue-100 text-blue-800",
@@ -66,6 +67,7 @@ function StatsCard({ label, value, icon: Icon, color }: { label: string; value: 
 }
 
 export default function BuildingsPage() {
+  const { campusName } = useAdminAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
@@ -122,7 +124,7 @@ export default function BuildingsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-foreground sm:text-2xl">Campus Buildings</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">Manage all CTU Danao Campus locations</p>
+          <p className="text-muted-foreground text-sm mt-0.5">Manage locations for {campusName || "your campus"}</p>
         </div>
         <div className="flex gap-2">
           <Button

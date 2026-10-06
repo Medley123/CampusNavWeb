@@ -36,7 +36,7 @@ export default function AdminSettingsPage() {
     <div className="p-4 space-y-5 sm:p-6 sm:space-y-6">
       <div>
         <h1 className="text-xl font-bold sm:text-2xl">Admin Settings</h1>
-        <p className="mt-0.5 text-sm text-muted-foreground">Manage the single CampusNav administrator account.</p>
+          <p className="mt-0.5 text-sm text-muted-foreground">Manage your admin profile and sign-in details.</p>
       </div>
       <Card className="max-w-2xl shadow-sm">
         <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><Settings className="h-5 w-5 text-primary" />Account</CardTitle></CardHeader>

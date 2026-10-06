@@ -31,6 +31,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useAdminAuth } from "@/hooks/use-admin-auth";
+import { ADMIN_CAMPUSES, DEFAULT_ADMIN_CAMPUS } from "@/lib/campuses";
 import { ImagePlus, X, Upload } from "lucide-react";
 
 const MAX_IMAGES = 5;
@@ -274,6 +276,8 @@ function MultiImageUploader({
 
 export default function BuildingFormModal({ open, onClose, building, onSuccess }: Props) {
   const { toast } = useToast();
+  const { campusName } = useAdminAuth();
+  const campusCenter = ADMIN_CAMPUSES.find((campus) => campus.name === campusName) ?? DEFAULT_ADMIN_CAMPUS;
   const createBuilding = useCreateBuilding();
   const updateBuilding = useUpdateBuilding();
   const isEditing = !!building;
@@ -289,8 +293,8 @@ export default function BuildingFormModal({ open, onClose, building, onSuccess }
       floors: 1,
       floorsLocations: ["Ground"],
       rooms: "",
-      latitude: 10.5034,
-      longitude: 124.0292,
+      latitude: campusCenter.latitude,
+      longitude: campusCenter.longitude,
       color: "#800000",
       images: [],
     },
@@ -322,13 +326,13 @@ export default function BuildingFormModal({ open, onClose, building, onSuccess }
         floors: 1,
         floorsLocations: ["Ground"],
         rooms: "",
-        latitude: 10.5034,
-        longitude: 124.0292,
+        latitude: campusCenter.latitude,
+        longitude: campusCenter.longitude,
         color: "#800000",
         images: [],
       });
     }
-  }, [building, form, open]);
+  }, [building, campusCenter.latitude, campusCenter.longitude, form, open]);
 
   const onSubmit = async (values: FormValues) => {
     const payload = {

@@ -177,11 +177,12 @@ components:
 
     Building:
       type: object
-      required: [id, slug, name, shortName, category, description, floors, rooms, latitude, longitude, color, createdAt, updatedAt]
+      required: [id, slug, name, campusName, shortName, category, description, floors, rooms, latitude, longitude, color, createdAt, updatedAt]
       properties:
         id:          { type: integer }
         slug:        { type: string }
         name:        { type: string }
+        campusName:  { type: string }
         shortName:   { type: string }
         category:    { type: string }
         description: { type: string }
@@ -207,6 +208,7 @@ components:
       properties:
         slug:        { type: string, minLength: 1 }
         name:        { type: string, minLength: 1 }
+        campusName:  { type: string, minLength: 1 }
         shortName:   { type: string, minLength: 1 }
         category:    { type: string, enum: [academic, admin, facility, sports] }
         description: { type: string }
@@ -230,6 +232,7 @@ components:
       properties:
         slug:        { type: string, minLength: 1 }
         name:        { type: string, minLength: 1 }
+        campusName:  { type: string, minLength: 1 }
         shortName:   { type: string, minLength: 1 }
         category:    { type: string, enum: [academic, admin, facility, sports] }
         description: { type: string }

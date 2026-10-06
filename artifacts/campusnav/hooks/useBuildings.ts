@@ -21,6 +21,7 @@ type ApiBuilding = {
   id: number;
   slug: string;
   name: string;
+  campusName?: string;
   shortName: string;
   category: string;
   description: string;
@@ -67,6 +68,7 @@ const buildingData: ApiBuilding[] = Array.isArray(data)
 const mapped: Building[] = buildingData.map((b) => ({
         id: b.slug,
         name: b.name,
+        campusName: b.campusName ?? "CTU Danao Campus",
         shortName: b.shortName,
         category: b.category as Building["category"],
         description: b.description,

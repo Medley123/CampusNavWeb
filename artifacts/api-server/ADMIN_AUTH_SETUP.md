@@ -1,16 +1,24 @@
 # Admin authentication
 
-Set these environment variables before starting the API server:
+Run `supabase/schema.sql` in the Supabase SQL Editor before starting the updated API. The migration preserves the existing admin account as a CTU Danao campus admin.
+
+Set separate credentials for the super admin and the existing Danao campus admin:
 
 ```env
+SUPER_ADMIN_USERNAME=superadmin@gmail.com
+SUPER_ADMIN_PASSWORD=use-a-long-unique-password
+SUPER_ADMIN_NAME=CampusNav Super Admin
 ADMIN_USERNAME=admin@gmail.com
 ADMIN_PASSWORD=use-a-long-unique-password
+ADMIN_NAME=CTU Danao Campus Admin
 ADMIN_SESSION_SECRET=use-a-long-random-secret
 ADMIN_SMTP_USER=admin@gmail.com
 ADMIN_SMTP_APP_PASSWORD=your-gmail-app-password
 ```
 
-The Admin Panel signs in through `/api/admin/login`. The first startup seeds one Supabase admin account from these variables if no admin record exists. After that, the account in Supabase is shared across devices. The Settings page can update the admin Gmail, display name, and app password. The API stores the session in an HttpOnly cookie and protects building create/update/delete/seed operations, image uploads, and the admin user list. Public building read endpoints remain available to the mobile app.
+The first successful super-admin login creates its account from `SUPER_ADMIN_USERNAME` and `SUPER_ADMIN_PASSWORD`. The existing Danao account is migrated from `admin_settings`, or seeded from `ADMIN_USERNAME` and `ADMIN_PASSWORD` if no stored account exists. Super admins can create, edit, block, and delete campus admin accounts and assign their campus. Campus admins can manage buildings only for their assigned campus. The public building list remains systemwide for the mobile app and includes each building's campus name.
+
+The Admin Panel signs in through `/api/admin/login`; sessions use an HttpOnly cookie. Campus admins can update their own Gmail, display name, and password in Settings. Super-admin and campus-admin credentials must use different Gmail addresses.
 
 `ADMIN_PASSWORD` is an app password for CampusNav. Never use or store the real Gmail password. The app does not need access to Gmail passwords.
 
