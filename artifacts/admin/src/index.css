@@ -185,6 +185,49 @@
   --shadow-2xl: 0px 25px 50px -12px rgba(0,0,0,0.5);
 }
 
+.super-admin-sidebar {
+  --sidebar: 48 100% 50%;
+  --sidebar-foreground: 345 42% 14%;
+  --sidebar-border: 45 80% 42%;
+  --sidebar-primary: 345 42% 14%;
+  --sidebar-primary-foreground: 48 100% 50%;
+  --sidebar-accent: 45 85% 42%;
+  --sidebar-accent-foreground: 345 42% 14%;
+  --sidebar-ring: 345 42% 14%;
+}
+
+.floor-plan-map-handle {
+  border: 0;
+  background: transparent;
+}
+
+.floor-plan-move-handle {
+  display: flex;
+  width: 52px;
+  height: 26px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+  border-radius: 5px;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  box-shadow: 0 1px 5px rgb(0 0 0 / 45%);
+  cursor: move;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.floor-plan-resize-handle {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border: 3px solid white;
+  border-radius: 3px;
+  background: hsl(var(--primary));
+  box-shadow: 0 1px 5px rgb(0 0 0 / 45%);
+  cursor: nwse-resize;
+}
+
 @layer base {
   * {
     @apply border-border;

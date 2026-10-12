@@ -11,7 +11,7 @@ const CATEGORY_STYLES: Record<string, string> = {
   sports: "bg-purple-100 text-purple-800",
 };
 
-export default function DashboardPage({ campusName }: { campusName: string | null }) {
+export default function DashboardPage({ campusName, isSuperAdmin = false }: { campusName: string | null; isSuperAdmin?: boolean }) {
   const { data: buildings = [], isLoading: buildingsLoading } = useListBuildings();
   const { data: stats, isLoading: statsLoading } = useGetBuildingStats();
 
@@ -22,15 +22,19 @@ export default function DashboardPage({ campusName }: { campusName: string | nul
     <div className="p-4 space-y-5 sm:p-6 sm:space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-bold text-foreground sm:text-2xl">Dashboard</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">CampusNav overview for {campusName || "your campus"}</p>
+          <h1 className="text-xl font-bold text-foreground sm:text-2xl">{isSuperAdmin ? "System Dashboard" : "Dashboard"}</h1>
+          <p className="text-muted-foreground text-sm mt-0.5">
+            {isSuperAdmin ? "CampusNav overview across all campuses" : `CampusNav overview for ${campusName || "your campus"}`}
+          </p>
         </div>
-        <Link href="/buildings">
-          <Button size="sm" className="gap-2">
-            <Building2 className="w-4 h-4" />
-            Manage Buildings
-          </Button>
-        </Link>
+        {!isSuperAdmin && (
+          <Link href="/buildings">
+            <Button size="sm" className="gap-2">
+              <Building2 className="w-4 h-4" />
+              Manage Buildings
+            </Button>
+          </Link>
+        )}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -64,10 +68,12 @@ export default function DashboardPage({ campusName }: { campusName: string | nul
 
       <Card className="shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
-          <CardTitle className="text-lg">Campus Buildings</CardTitle>
-          <Link href="/buildings" className="text-sm text-primary hover:underline inline-flex items-center gap-1">
-            View all <ChevronRight className="w-4 h-4" />
-          </Link>
+          <CardTitle className="text-lg">{isSuperAdmin ? "Buildings Across Campuses" : "Campus Buildings"}</CardTitle>
+          {!isSuperAdmin && (
+            <Link href="/buildings" className="text-sm text-primary hover:underline inline-flex items-center gap-1">
+              View all <ChevronRight className="w-4 h-4" />
+            </Link>
+          )}
         </CardHeader>
         <CardContent className="p-0">
           {buildingsLoading ? (

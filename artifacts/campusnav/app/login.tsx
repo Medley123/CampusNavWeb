@@ -1,4 +1,5 @@
 import * as Google from "expo-auth-session/providers/google";
+import { makeRedirectUri } from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import React, { useEffect, useState } from "react";
 import {
@@ -19,7 +20,9 @@ import { useColors } from "@/hooks/useColors";
 WebBrowser.maybeCompleteAuthSession();
 
 const LOGO = require("../assets/images/cmpslogo.png");
-const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
 const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:8080";
 
 function GoogleSignInButton({
@@ -31,10 +34,15 @@ function GoogleSignInButton({
   onProfile: (profile: { email: string; name: string; picture?: string }, accessToken: string) => void;
   onError: (message: string) => void;
 }) {
+  const redirectUri = makeRedirectUri({
+    native: "https://auth.expo.io/@kathyjun18/campusnav",
+  });
+
   const [request, response, promptAsync] = Google.useAuthRequest({
-    webClientId: GOOGLE_CLIENT_ID,
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+    webClientId: GOOGLE_WEB_CLIENT_ID,
+    iosClientId: GOOGLE_IOS_CLIENT_ID || GOOGLE_WEB_CLIENT_ID,
+    androidClientId: GOOGLE_ANDROID_CLIENT_ID || GOOGLE_WEB_CLIENT_ID,
+    redirectUri,
   });
   const callbacks = React.useRef({ onProfile, onError });
   callbacks.current = { onProfile, onError };
@@ -58,7 +66,7 @@ function GoogleSignInButton({
         if (!result.ok) throw new Error("Could not read Google profile.");
         const profile = await result.json();
         if (!profile.email?.toLowerCase().endsWith("@gmail.com")) {
-          throw new Error("Only Gmail accounts are allowed.");
+          throw new Error("Log-in using your google accounts are allowed.");
         }
         callbacks.current.onProfile({
           email: profile.email,
@@ -161,6 +169,8 @@ export default function LoginScreen() {
     }
   };
 
+  const hasClientId = GOOGLE_WEB_CLIENT_ID || GOOGLE_ANDROID_CLIENT_ID || GOOGLE_IOS_CLIENT_ID;
+
   return (
     <KeyboardAvoidingView
       style={[styles.screen, { backgroundColor: colors.background }]}
@@ -196,7 +206,7 @@ export default function LoginScreen() {
             </Pressable>
           </View>
         ) : (
-          GOOGLE_CLIENT_ID ? (
+          hasClientId ? (
             <GoogleSignInButton
               disabled={busy}
               onProfile={handleGoogleProfile}
@@ -209,7 +219,7 @@ export default function LoginScreen() {
         )}
 
         {error && <Text style={styles.error}>{error}</Text>}
-        {!GOOGLE_CLIENT_ID && <Text style={[styles.hint, { color: colors.mutedForeground }]}>Set EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID to enable Google Sign-In.</Text>}
+        {!hasClientId && <Text style={[styles.hint, { color: colors.mutedForeground }]}>Set EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID to enable Google Sign-In.</Text>}
         <Text style={[styles.footer, { color: colors.mutedForeground }]}>Continue with Google.</Text>
       </View>
     </KeyboardAvoidingView>
@@ -227,7 +237,7 @@ const styles = StyleSheet.create({
   label: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
   input: { height: 48, borderWidth: 1, borderRadius: 10, paddingHorizontal: 14, fontSize: 15, fontFamily: "Inter_400Regular" },
   button: { minHeight: 48, borderRadius: 10, alignItems: "center", justifyContent: "center", paddingHorizontal: 16, marginTop: 4 },
-  buttonText: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
+  buttonText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: "#FFFFFF" },
   error: { color: "#C53030", fontSize: 13, fontFamily: "Inter_500Medium", textAlign: "center" },
   hint: { fontSize: 12, lineHeight: 17, textAlign: "center" },
   footer: { fontSize: 12, textAlign: "center", marginTop: 8 },

@@ -3,7 +3,7 @@
 ## Configure the project
 
 1. Create a Supabase project and open **SQL Editor**.
-2. Run `supabase/schema.sql` from this folder. It creates the tables, enables row-level security, and creates a public `building-photos` bucket for app images.
+2. Run `supabase/schema.sql` from this folder. It creates the tables, enables row-level security, and creates a public `building-photos` bucket for app images and campus floor plans. If the project was already set up, run the new `campus_floor_plans` table block from `supabase/schema.sql` in SQL Editor before using the floor-plan editor.
 3. Set `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_STORAGE_BUCKET=building-photos` in the API server's `.env`. Get the URL and service-role key from the Supabase project's API settings. The service-role key is server-only: do not put it in the admin/mobile app or commit it.
 4. Keep the existing Firebase project credentials in the API `.env` temporarily for migration. Do not remove them until the migration succeeds.
 

@@ -241,8 +241,8 @@ function Overlay(props: OverlayProps) {
 
     const imageUrl = typeof image === "string" ? image : image?.uri || image;
     const imageBounds: [[number, number], [number, number]] = [
-      [bounds[0][0], bounds[0][1]],
-      [bounds[1][0], bounds[1][1]],
+      [Math.min(bounds[0][0], bounds[1][0]), Math.min(bounds[0][1], bounds[1][1])],
+      [Math.max(bounds[0][0], bounds[1][0]), Math.max(bounds[0][1], bounds[1][1])],
     ];
 
     const imageOverlay = L.imageOverlay(imageUrl, imageBounds, {

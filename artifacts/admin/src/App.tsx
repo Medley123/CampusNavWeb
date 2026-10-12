@@ -1,4 +1,4 @@
-import { useState, type ElementType, type ReactNode } from "react";
+import { useEffect, useState, type ElementType, type ReactNode } from "react";
 import { Switch, Route, Router as WouterRouter, Link, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { LogOut, Menu, Moon, Sun, X } from "lucide-react";
@@ -7,7 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import BuildingsPage from "@/pages/BuildingsPage";
-import { LayoutDashboard, Building2, ChevronRight, Users, Settings } from "lucide-react";
+import { LayoutDashboard, Building2, ChevronRight, Users, Settings, Map } from "lucide-react";
 import { cn } from "@/lib/utils";
 import UsersPage from "@/pages/UsersPage";
 import DashboardOverview from "@/pages/DashboardPage";
@@ -15,6 +15,7 @@ import AdminAccountsPage from "@/pages/AdminAccountsPage";
 import AdminLoginPage from "@/pages/AdminLoginPage";
 import { AdminAuthProvider, useAdminAuth } from "@/hooks/use-admin-auth";
 import AdminSettingsPage from "@/pages/AdminSettingsPage";
+import CampusFloorPlansPage from "@/pages/CampusFloorPlansPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -45,10 +46,12 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { username, name, logout, role, campusName } = useAdminAuth();
   const { resolvedTheme, setTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
+  const isSuperAdmin = role === "super_admin";
 
   return (
     <aside className={cn(
       "fixed inset-y-0 left-0 z-50 w-64 flex-shrink-0 bg-sidebar flex flex-col h-screen transition-transform duration-200 md:sticky md:z-auto md:translate-x-0",
+      isSuperAdmin && "super-admin-sidebar",
       open ? "translate-x-0" : "-translate-x-full",
     )}>
       <div className="px-5 py-6 border-b border-sidebar-border">
@@ -60,9 +63,9 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
               className="w-15 h-15 rounded-lg object-cover"
             />
           </div>
-          <div>
-            <p className="text-sidebar-foreground font-bold text-base leading-none">CampusNav</p>
-            <p className="text-sidebar-foreground/50 text-xs mt-1">Admin Panel</p>
+          <div className="min-w-0 flex-1">
+            <p className="break-words text-sidebar-foreground font-bold text-sm leading-tight">{"CampusNav"}</p>
+            <p className="text-sidebar-foreground/60 text-xs mt-1">{isSuperAdmin ? "Superadmin Panel" : "Admin Panel"}</p>
           </div>
           <button
             type="button"
@@ -86,12 +89,17 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
       <nav className="flex-1 px-3 py-4 space-y-1">
         <p className="px-4 text-xs font-semibold text-sidebar-foreground/40 uppercase tracking-wider mb-2">Navigation</p>
         {role === "super_admin" ? (
-          <NavItem href="/" icon={Building2} label="Campus Admins" onNavigate={onClose} />
+          <>
+            <NavItem href="/dashboard" icon={LayoutDashboard} label="Dashboard" onNavigate={onClose} />
+            <NavItem href="/" icon={Building2} label="Campus Admins" onNavigate={onClose} />
+            <NavItem href="/users" icon={Users} label="Users" onNavigate={onClose} />
+            <NavItem href="/floor-plans" icon={Map} label="Floor Plans" onNavigate={onClose} />
+            <NavItem href="/settings" icon={Settings} label="Settings" onNavigate={onClose} />
+          </>
         ) : (
           <>
             <NavItem href="/" icon={LayoutDashboard} label="Dashboard" onNavigate={onClose} />
             <NavItem href="/buildings" icon={Building2} label="Buildings" onNavigate={onClose} />
-            <NavItem href="/users" icon={Users} label="Users" onNavigate={onClose} />
             <NavItem href="/settings" icon={Settings} label="Settings" onNavigate={onClose} />
           </>
         )}
@@ -100,8 +108,8 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
       <div className="px-5 py-4 border-t border-sidebar-border">
         <div className="mb-3 flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <p className="truncate text-xs font-medium text-sidebar-foreground">{name || username}</p>
-            <p className="text-[11px] text-sidebar-foreground/40">Administrator</p>
+            <p className="truncate text-xs font-medium text-sidebar-foreground">{isSuperAdmin ? "CampusNav SuperAdmin" : name || username}</p>
+            <p className="text-[11px] text-sidebar-foreground/60">{isSuperAdmin ? "Super Administrator" : "Administrator"}</p>
           </div>
           <button
             type="button"
@@ -121,10 +129,10 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
 }
 
 function DashboardPage() {
-  const { campusName } = useAdminAuth();
+  const { campusName, role } = useAdminAuth();
   return (
     <div className="flex-1 min-h-screen">
-      <DashboardOverview campusName={campusName} />
+      <DashboardOverview campusName={campusName} isSuperAdmin={role === "super_admin"} />
     </div>
   );
 }
@@ -167,10 +175,12 @@ function Router() {
     <AppLayout>
       <Switch>
         <Route path="/" component={role === "super_admin" ? AdminAccountsPage : DashboardPage} />
+        <Route path="/dashboard" component={role === "super_admin" ? DashboardPage : NotFound} />
         <Route path="/admins" component={role === "super_admin" ? AdminAccountsPage : NotFound} />
         <Route path="/buildings" component={role === "campus_admin" ? BuildingsPage : NotFound} />
-        <Route path="/users" component={role === "campus_admin" ? UsersPage : NotFound} />
-        <Route path="/settings" component={role === "campus_admin" ? AdminSettingsPage : NotFound} />
+        <Route path="/users" component={role === "super_admin" ? UsersPage : NotFound} />
+        <Route path="/floor-plans" component={role === "super_admin" ? CampusFloorPlansPage : NotFound} />
+        <Route path="/settings" component={role === "super_admin" || role === "campus_admin" ? AdminSettingsPage : NotFound} />
         <Route component={NotFound} />
       </Switch>
     </AppLayout>
@@ -193,7 +203,11 @@ function App() {
 }
 
 function AdminAuthGate() {
-  const { username, loading } = useAdminAuth();
+  const { username, loading, role } = useAdminAuth();
+
+  useEffect(() => {
+    document.title = role === "super_admin" ? "CampusNav Super Admin" : "CampusNav Admin";
+  }, [role]);
 
   if (loading) {
     return <div className="min-h-screen bg-background flex items-center justify-center text-sm text-muted-foreground">Checking admin session...</div>;

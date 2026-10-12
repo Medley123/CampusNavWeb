@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import MapView, {
   Marker,
+  Overlay,
   Polyline,
   PROVIDER_DEFAULT,
 } from "react-native-maps";
@@ -36,6 +37,24 @@ import { useAuth } from "@/hooks/useAuth";
 import { useActiveUsers } from "@/hooks/useActiveUsers";
 import { useBuildings } from "@/hooks/useBuildings";
 import { haversineDistance } from "@/utils/distance";
+
+type CampusFloorPlan = {
+  campusName: string;
+  floorLevel: FloorLevel;
+  imageUrl: string;
+  bounds: { north: number; south: number; east: number; west: number };
+};
+
+function getCampusFloorPlansApiUrl() {
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
+  if (apiUrl) return `${apiUrl.replace(/\/$/, "")}/api/campus-floor-plans`;
+  const domain = process.env.EXPO_PUBLIC_DOMAIN;
+  if (domain) {
+    const protocol = /^https?:\/\//i.test(domain) ? "" : "https://";
+    return `${protocol}${domain.replace(/\/$/, "")}/api/campus-floor-plans`;
+  }
+  return "http://localhost:8080/api/campus-floor-plans";
+}
 
 const MIN_LAT = 10.5022;
 const MAX_LAT = 10.5046;
@@ -177,6 +196,7 @@ export default function MapScreen() {
   const [navTarget, setNavTarget] = useState<Building | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [currentFloor, setCurrentFloor] = useState<FloorLevel>("Ground");
+  const [floorPlans, setFloorPlans] = useState<CampusFloorPlan[]>([]);
   const location = useLocation();
   const isWeb = Platform.OS === "web";
   const {
@@ -184,6 +204,23 @@ export default function MapScreen() {
     loading: buildingsLoading,
     refetch,
   } = useBuildings();
+
+  useEffect(() => {
+    let active = true;
+    fetch(getCampusFloorPlansApiUrl())
+      .then((response) => response.ok ? response.json() : [])
+      .then((data: CampusFloorPlan[]) => {
+        if (active) setFloorPlans(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (active) setFloorPlans([]);
+      });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    mapRef.current?.animateToRegion(getCampusRegion(selectedCampus), 500);
+  }, [selectedCampus.id]);
 
   // Filter buildings by current floor
   const filteredBuildings = buildings.filter((building) => {
@@ -194,6 +231,7 @@ export default function MapScreen() {
     return building.floorsLocations.includes(currentFloor);
   });
   const campusBuildings = filteredBuildings.filter((building) => building.campusName === selectedCampus.name);
+  const selectedFloorPlan = floorPlans.find((plan) => plan.campusName === selectedCampus.name && plan.floorLevel === currentFloor);
 
   const topPad = Platform.OS === "web" ? 40 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -328,13 +366,12 @@ export default function MapScreen() {
 
   return (
     <View style={styles.container}>
-      {isWeb && (
-        <View
-          style={[
-            styles.floorButtonsContainer,
-            { top: "50%" as any },
-          ]}
-        >
+      <View
+        style={[
+          styles.floorButtonsContainer,
+          { top: "50%" as any },
+        ]}
+      >
           <Pressable
             accessibilityLabel="Go to previous floor"
             disabled={!canMoveUp}
@@ -370,8 +407,7 @@ export default function MapScreen() {
               color={canMoveDown ? colors.primary : colors.border}
             />
           </Pressable>
-        </View>
-      )}
+      </View>
 
       <MapView
         ref={mapRef}
@@ -385,6 +421,16 @@ export default function MapScreen() {
         maxZoomLevel={20}
         onPress={() => setSelectedBuilding(null)}
       >
+          {selectedFloorPlan && (
+            <Overlay
+              image={{ uri: selectedFloorPlan.imageUrl }}
+              bounds={[
+                [selectedFloorPlan.bounds.north, selectedFloorPlan.bounds.west],
+                [selectedFloorPlan.bounds.south, selectedFloorPlan.bounds.east],
+              ]}
+              opacity={0.82}
+            />
+          )}
           <Marker
             coordinate={{ latitude: selectedCampus.latitude, longitude: selectedCampus.longitude }}
             title={selectedCampus.name}
