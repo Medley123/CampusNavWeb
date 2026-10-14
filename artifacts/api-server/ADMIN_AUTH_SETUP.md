@@ -22,6 +22,6 @@ The Admin Panel signs in through `/api/admin/login`; sessions use an HttpOnly co
 
 `ADMIN_PASSWORD` is an app password for CampusNav. Never use or store the real Gmail password. The app does not need access to Gmail passwords.
 
-To receive email alerts for Admin Panel logins and account changes, configure `ADMIN_SMTP_USER` and a Gmail App Password in `ADMIN_SMTP_APP_PASSWORD`. Create the App Password in Google Account security settings; never put the normal Gmail password in the server configuration.
+To receive email alerts for Admin Panel logins and account changes, and password reset codes for app users, configure `ADMIN_SMTP_USER` and a Gmail App Password in `ADMIN_SMTP_APP_PASSWORD`. Create the App Password in Google Account security settings; never put the normal Gmail password in the server configuration.
 
 Do not commit real credentials or put them in the frontend environment.

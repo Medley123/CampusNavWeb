@@ -3,9 +3,11 @@
 ## Configure the project
 
 1. Create a Supabase project and open **SQL Editor**.
-2. Run `supabase/schema.sql` from this folder. It creates the tables, enables row-level security, and creates a public `building-photos` bucket for app images and campus floor plans. If the project was already set up, run the new `campus_floor_plans` table block from `supabase/schema.sql` in SQL Editor before using the floor-plan editor.
+2. Run `supabase/schema.sql` from this folder. It creates the tables, enables row-level security, and creates a public `building-photos` bucket for app images and campus floor plans. For an existing project, run the `alter table public.users` and `create unique index ... users_username_unique_idx` statements from this schema in SQL Editor to enable email/password accounts. If username values are duplicated regardless of case, resolve those duplicates before creating the unique index.
 3. Set `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_STORAGE_BUCKET=building-photos` in the API server's `.env`. Get the URL and service-role key from the Supabase project's API settings. The service-role key is server-only: do not put it in the admin/mobile app or commit it.
 4. Keep the existing Firebase project credentials in the API `.env` temporarily for migration. Do not remove them until the migration succeeds.
+
+Email/password account recovery also requires `ADMIN_SMTP_USER` and `ADMIN_SMTP_APP_PASSWORD` in the API server environment. Use a Gmail App Password; do not use a normal Gmail password.
 
 ## Migrate existing records and photos
 

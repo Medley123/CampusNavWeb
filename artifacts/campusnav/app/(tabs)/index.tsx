@@ -4,6 +4,7 @@ import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  AppState,
   useWindowDimensions,
   Platform,
   Pressable,
@@ -36,6 +37,7 @@ import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/hooks/useAuth";
 import { useActiveUsers } from "@/hooks/useActiveUsers";
 import { useBuildings } from "@/hooks/useBuildings";
+import { getApiBaseUrl } from "@/utils/api";
 import { haversineDistance } from "@/utils/distance";
 
 type CampusFloorPlan = {
@@ -46,14 +48,14 @@ type CampusFloorPlan = {
 };
 
 function getCampusFloorPlansApiUrl() {
-  const apiUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
-  if (apiUrl) return `${apiUrl.replace(/\/$/, "")}/api/campus-floor-plans`;
-  const domain = process.env.EXPO_PUBLIC_DOMAIN;
-  if (domain) {
-    const protocol = /^https?:\/\//i.test(domain) ? "" : "https://";
-    return `${protocol}${domain.replace(/\/$/, "")}/api/campus-floor-plans`;
-  }
-  return "http://localhost:8080/api/campus-floor-plans";
+  return `${getApiBaseUrl()}/api/campus-floor-plans`;
+}
+
+async function fetchCampusFloorPlans(): Promise<CampusFloorPlan[]> {
+  const response = await fetch(getCampusFloorPlansApiUrl());
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const data = await response.json();
+  return Array.isArray(data) ? data : [];
 }
 
 const MIN_LAT = 10.5022;
@@ -207,15 +209,24 @@ export default function MapScreen() {
 
   useEffect(() => {
     let active = true;
-    fetch(getCampusFloorPlansApiUrl())
-      .then((response) => response.ok ? response.json() : [])
-      .then((data: CampusFloorPlan[]) => {
-        if (active) setFloorPlans(Array.isArray(data) ? data : []);
-      })
-      .catch(() => {
+    const loadFloorPlans = async () => {
+      try {
+        const data = await fetchCampusFloorPlans();
+        if (active) setFloorPlans(data);
+      } catch {
         if (active) setFloorPlans([]);
-      });
-    return () => { active = false; };
+      }
+    };
+
+    void loadFloorPlans();
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") void loadFloorPlans();
+    });
+
+    return () => {
+      active = false;
+      subscription.remove();
+    };
   }, []);
 
   useEffect(() => {
@@ -327,6 +338,9 @@ export default function MapScreen() {
 
  
   refetch();
+  void fetchCampusFloorPlans()
+    .then(setFloorPlans)
+    .catch(() => setFloorPlans([]));
 
   if (!isWeb) {
     mapRef.current?.animateToRegion(getCampusRegion(selectedCampus), 500);

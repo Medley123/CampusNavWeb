@@ -22,32 +22,53 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-lg sm:p-8">
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            <Building2 className="h-7 w-7" />
-          </div>
-          <h1 className="text-2xl font-bold">CampusNav Admin</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Sign in to manage campus data</p>
-        </div>
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <main className="flex min-h-screen items-center justify-center bg-[#eef1f3] p-4 sm:p-8">
+      <div className="grid w-full max-w-5xl overflow-hidden rounded-3xl bg-card shadow-2xl md:min-h-[600px] md:grid-cols-[0.9fr_1.1fr]">
+        <section className="relative flex flex-col items-center justify-center overflow-hidden bg-[#800000] px-8 py-10 text-center text-white sm:px-12 md:py-14">
+          <div className="absolute -right-20 -top-24 h-64 w-64 rounded-full border border-white/10" />
+          <div className="absolute -bottom-36 -left-20 h-72 w-72 rounded-full border border-white/10" />
           <div className="relative">
-            <UserRound className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input type="email" value={username} onChange={(event) => setUsername(event.target.value)} placeholder="Admin Gmail" className="pl-9" autoComplete="username" required />
+            <img src="/cmpslogo.png" alt="CampusNav logo" className="mx-auto mb-7 h-24 w-24 rounded-2xl object-cover shadow-lg" />
+            <h1 className="text-3xl font-bold tracking-normal">Welcome to CampusNav</h1>
+            <p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-white/75">Your campus, organized in one place. Sign in to manage buildings and campus information.</p>
           </div>
-          <div className="relative">
-            <LockKeyhole className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Password" className="pl-9 pr-10" autoComplete="current-password" required />
-            <button type="button" aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword((visible) => !visible)} className="absolute right-0 top-0 inline-flex h-10 w-10 items-center justify-center text-muted-foreground hover:text-foreground">
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
+        </section>
+
+        <section className="flex items-center justify-center px-6 py-10 sm:px-12 md:px-14">
+          <div className="w-full max-w-md">
+            <div className="mb-8 text-center">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <Building2 className="h-6 w-6" />
+              </div>
+              <h2 className="text-3xl font-bold tracking-normal">Welcome Back</h2>
+              <p className="mt-2 text-sm text-muted-foreground">Sign in to your admin account</p>
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="space-y-2">
+                <label htmlFor="admin-email" className="text-sm font-medium">Email</label>
+                <div className="relative">
+                  <UserRound className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input id="admin-email" type="email" value={username} onChange={(event) => setUsername(event.target.value)} placeholder="Enter your email" className="h-12 rounded-xl pl-10" autoComplete="username" required />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="admin-password" className="text-sm font-medium">Password</label>
+                <div className="relative">
+                  <LockKeyhole className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input id="admin-password" type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" className="h-12 rounded-xl pl-10 pr-10" autoComplete="current-password" required />
+                  <button type="button" aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword((visible) => !visible)} className="absolute right-0 top-0 inline-flex h-12 w-10 items-center justify-center text-muted-foreground hover:text-foreground">
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+              {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+              <Button type="submit" className="h-12 w-full rounded-xl text-base" disabled={submitting}>
+                {submitting ? "Signing in..." : "Sign In"}
+              </Button>
+            </form>
+            <p className="mt-8 text-center text-xs text-muted-foreground">CampusNav Admin Portal</p>
           </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          <Button type="submit" className="w-full" disabled={submitting}>
-            {submitting ? "Signing in..." : "Sign in"}
-          </Button>
-        </form>
+        </section>
       </div>
     </main>
   );

@@ -24,8 +24,20 @@ create table if not exists public.users (
   username text not null,
   name text not null,
   picture text,
-  last_login_at timestamptz not null default now()
+  last_login_at timestamptz not null default now(),
+  password_hash text,
+  password_salt text,
+  password_reset_code_hash text,
+  password_reset_expires_at timestamptz
 );
+
+alter table public.users
+  add column if not exists password_hash text,
+  add column if not exists password_salt text,
+  add column if not exists password_reset_code_hash text,
+  add column if not exists password_reset_expires_at timestamptz;
+
+create unique index if not exists users_username_unique_idx on public.users (lower(username));
 
 create table if not exists public.admin_settings (
   id smallint primary key default 1 check (id = 1),

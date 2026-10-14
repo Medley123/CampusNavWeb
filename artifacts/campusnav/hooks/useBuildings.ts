@@ -1,21 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { Platform } from "react-native";
 import { Building } from "@/constants/buildings";
-
-const getApiUrl = () => {
-  const apiUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
-  if (apiUrl) {
-    return `${apiUrl.replace(/\/$/, "")}/api/buildings`;
-  }
-
-  const domain = process.env.EXPO_PUBLIC_DOMAIN;
-  if (domain) {
-    const protocol = /^https?:\/\//i.test(domain) ? "" : "https://";
-    return `${protocol}${domain.replace(/\/$/, "")}/api/buildings`;
-  }
-
-  return "http://localhost:8080/api/buildings";
-};
+import { getApiBaseUrl } from "@/utils/api";
 
 type ApiBuilding = {
   id: number;
@@ -53,7 +38,7 @@ export function useBuildings() {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch(getApiUrl());
+      const res = await fetch(`${getApiBaseUrl()}/api/buildings`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
 
