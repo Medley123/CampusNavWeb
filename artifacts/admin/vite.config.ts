@@ -29,6 +29,9 @@ export default defineConfig(({ mode }) => {
       emptyOutDir: true,
     },
     server: {
+      cors: {
+        origin: [/^https?:\/\/localhost(?::\d+)?$/, /^https:\/\/[a-z0-9-]+\.asse\.devtunnels\.ms$/],
+      },
       port,
       strictPort: true,
       host: "0.0.0.0",

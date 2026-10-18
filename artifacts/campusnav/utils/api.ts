@@ -8,15 +8,16 @@ function apiUrlFromDevHost(host: string) {
 }
 
 export function getApiBaseUrl() {
-  const apiUrl = process.env.EXPO_PUBLIC_API_URL?.trim().replace(/[<>]/g, "");
-  if (apiUrl) return apiUrl.replace(/\/$/, "");
-
   const hostname = Platform.OS === "web" && typeof window !== "undefined"
     ? window.location.hostname
     : "";
   if (hostname === "localhost" || hostname === "127.0.0.1") {
     return "http://localhost:8080";
   }
+
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL?.trim().replace(/[<>]/g, "");
+  if (apiUrl) return apiUrl.replace(/\/$/, "");
+
   if (hostname) return apiUrlFromDevHost(hostname);
 
   const domain = process.env.EXPO_PUBLIC_DOMAIN?.trim().replace(/[<>]/g, "");

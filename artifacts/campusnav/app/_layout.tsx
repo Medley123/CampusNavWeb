@@ -40,6 +40,8 @@ function RootLayoutNav() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="info" options={{ headerShown: false, animation: "slide_from_right" }} />
+      <Stack.Screen name="feedback" options={{ headerShown: false, animation: "slide_from_right" }} />
       <Stack.Screen
         name="building/[id]"
         options={{

@@ -734,6 +734,32 @@ export default function MapScreen() {
               <Text style={[styles.accountMenuActionText, { color: colors.foreground }]}>Appearance</Text>
             </View>
             <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                setMenuOpen(false);
+                router.push("/info");
+              }}
+              style={({ pressed }) => [styles.accountMenuActions, pressed && { opacity: 0.65 }]}
+            >
+              <View style={[styles.menuIconButton, { backgroundColor: colors.primaryLight }]}>
+                <Feather name="info" size={16} color={colors.primary} />
+              </View>
+              <Text style={[styles.accountMenuActionText, { color: colors.foreground }]}>App info & updates</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                setMenuOpen(false);
+                router.push("/feedback");
+              }}
+              style={({ pressed }) => [styles.accountMenuActions, pressed && { opacity: 0.65 }]}
+            >
+              <View style={[styles.menuIconButton, { backgroundColor: colors.primaryLight }]}>
+                <Feather name="message-square" size={16} color={colors.primary} />
+              </View>
+              <Text style={[styles.accountMenuActionText, { color: colors.foreground }]}>Send feedback</Text>
+            </Pressable>
+            <Pressable
               accessibilityLabel="Sign out"
               onPress={() => {
                 setMenuOpen(false);

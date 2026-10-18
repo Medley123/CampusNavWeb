@@ -5,6 +5,7 @@ import usersRouter from "./users.js";
 import adminAuthRouter from "./admin-auth.js";
 import adminAccountsRouter from "./admin-accounts.js";
 import campusFloorPlansRouter from "./campus-floor-plans.js";
+import appContentRouter from "./app-content.js";
 
 const router: IRouter = Router();
 
@@ -14,5 +15,6 @@ router.use(adminAccountsRouter);
 router.use(buildingsRouter);
 router.use(usersRouter);
 router.use(campusFloorPlansRouter);
+router.use(appContentRouter);
 
 export default router;

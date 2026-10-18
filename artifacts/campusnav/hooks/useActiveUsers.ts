@@ -1,19 +1,11 @@
 import { useEffect, useState } from "react";
-import { Platform } from "react-native";
+import { getApiBaseUrl } from "../utils/api";
 
 export function useActiveUsers(username?: string): number | null {
   const [count, setCount] = useState<number | null>(null);
 
   useEffect(() => {
-    const domain = process.env.EXPO_PUBLIC_DOMAIN;
-
-    let wsUrl: string;
-    if (Platform.OS === "web" && typeof window !== "undefined") {
-      const proto = window.location.protocol === "https:" ? "wss" : "ws";
-      wsUrl = `${proto}://${window.location.host}/api/ws?client=app`;
-    } else {
-      wsUrl = `wss://${domain}/api/ws?client=app`;
-    }
+    const wsUrl = `${getApiBaseUrl().replace(/^http/i, "ws")}/api/ws?client=app`;
 
     let ws: WebSocket;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;

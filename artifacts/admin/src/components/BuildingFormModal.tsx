@@ -71,12 +71,17 @@ function CoordinatePicker({ form }: { form: ReturnType<typeof useForm<FormValues
   const latitude = useWatch({ control: form.control, name: "latitude" });
   const longitude = useWatch({ control: form.control, name: "longitude" });
   const color = useWatch({ control: form.control, name: "color" });
+  const floorsLocations = useWatch({ control: form.control, name: "floorsLocations" });
+  const { campusName } = useAdminAuth();
+  const campusCenter = ADMIN_CAMPUSES.find((campus) => campus.name === campusName) ?? DEFAULT_ADMIN_CAMPUS;
 
   return (
     <div className="space-y-3">
       <MapPicker
         latitude={Number(latitude) || 10.5034}
         longitude={Number(longitude) || 124.0292}
+        campusName={campusCenter.name}
+        floorLevels={floorsLocations}
         color={color || "#800000"}
         onChange={(lat, lng) => {
           form.setValue("latitude", lat, { shouldValidate: true });

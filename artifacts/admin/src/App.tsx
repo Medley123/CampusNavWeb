@@ -7,7 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import BuildingsPage from "@/pages/BuildingsPage";
-import { LayoutDashboard, Building2, ChevronRight, Users, Settings, Map } from "lucide-react";
+import { LayoutDashboard, Building2, ChevronRight, Users, Settings, Map, Info, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import UsersPage from "@/pages/UsersPage";
 import DashboardOverview from "@/pages/DashboardPage";
@@ -16,6 +16,8 @@ import AdminLoginPage from "@/pages/AdminLoginPage";
 import { AdminAuthProvider, useAdminAuth } from "@/hooks/use-admin-auth";
 import AdminSettingsPage from "@/pages/AdminSettingsPage";
 import CampusFloorPlansPage from "@/pages/CampusFloorPlansPage";
+import AppUpdatesPage from "@/pages/AppUpdatesPage";
+import FeedbackPage from "@/pages/FeedbackPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -94,6 +96,8 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
             <NavItem href="/" icon={Building2} label="Campus Admins" onNavigate={onClose} />
             <NavItem href="/users" icon={Users} label="Users" onNavigate={onClose} />
             <NavItem href="/floor-plans" icon={Map} label="Floor Plans" onNavigate={onClose} />
+            <NavItem href="/app-updates" icon={Info} label="App Info & Updates" onNavigate={onClose} />
+            <NavItem href="/feedback" icon={MessageSquare} label="Feedback" onNavigate={onClose} />
             <NavItem href="/settings" icon={Settings} label="Settings" onNavigate={onClose} />
           </>
         ) : (
@@ -180,6 +184,8 @@ function Router() {
         <Route path="/buildings" component={role === "campus_admin" ? BuildingsPage : NotFound} />
         <Route path="/users" component={role === "super_admin" ? UsersPage : NotFound} />
         <Route path="/floor-plans" component={role === "super_admin" ? CampusFloorPlansPage : NotFound} />
+        <Route path="/app-updates" component={role === "super_admin" ? AppUpdatesPage : NotFound} />
+        <Route path="/feedback" component={role === "super_admin" ? FeedbackPage : NotFound} />
         <Route path="/settings" component={role === "super_admin" || role === "campus_admin" ? AdminSettingsPage : NotFound} />
         <Route component={NotFound} />
       </Switch>

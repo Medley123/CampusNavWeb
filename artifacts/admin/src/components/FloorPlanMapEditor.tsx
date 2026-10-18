@@ -43,7 +43,7 @@ export default function FloorPlanMapEditor({ latitude, longitude, imageUrl, boun
     if (!containerRef.current || mapRef.current) return;
 
     const map = L.map(containerRef.current, { center: [latitude, longitude], zoom: 18, minZoom: 12, maxZoom: 21 });
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    L.tileLayer("https://tile.openstreetmap.de/{z}/{x}/{y}.png", {
       attribution: "&copy; OpenStreetMap contributors",
       maxZoom: 21,
     }).addTo(map);

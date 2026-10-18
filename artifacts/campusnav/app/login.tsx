@@ -19,6 +19,7 @@ import {
 
 import { useAuth } from "@/hooks/useAuth";
 import { useColors } from "@/hooks/useColors";
+import colorPalettes from "@/constants/colors";
 import { getApiBaseUrl } from "@/utils/api";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -100,7 +101,8 @@ function GoogleSignInButton({
 export default function LoginScreen() {
   const { width } = useWindowDimensions();
   const isWide = width >= 760;
-  const colors = useColors();
+  const activeColors = useColors();
+  const colors = Platform.OS === "web" ? { ...activeColors, ...colorPalettes.light } : activeColors;
   const { signIn } = useAuth();
   const [mode, setMode] = useState<"welcome" | "login" | "signup" | "forgot" | "google-signup">("welcome");
   const [googleProfile, setGoogleProfile] = useState<{
@@ -295,21 +297,22 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={[styles.screen, { backgroundColor: colors.background }]}
+      style={[styles.screen, { backgroundColor: Platform.OS === "web" ? "#eef1f3" : colors.background }]}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView
-        contentContainerStyle={[styles.screenContent, { flexDirection: isWide ? "row" : "column", padding: isWide ? 32 : 20 }]}
+        contentContainerStyle={[styles.screenContent, { padding: isWide ? 32 : 20 }]}
         keyboardShouldPersistTaps="handled"
       >
-        {isWide && (
-          <View style={[styles.welcomePanel, { backgroundColor: colors.primary }]}>
-            <Image source={LOGO} style={styles.welcomeLogo} />
-            <Text style={styles.welcomeTitle}>Your Campus, At a Glance</Text>
-            <Text style={styles.welcomeSubtitle}>A simpler way to find the places that matter at CTU.</Text>
-          </View>
-        )}
-        <View style={[styles.panel, { backgroundColor: colors.card, borderColor: colors.border, width: isWide ? "55%" : "100%", maxWidth: isWide ? 490 : 430 }]}>
+        <View style={[styles.authShell, { backgroundColor: colors.card }, isWide ? styles.authShellWide : styles.authShellNarrow]}>
+          {isWide && (
+            <View style={styles.welcomePanel}>
+              <Image source={LOGO} style={styles.welcomeLogo} />
+              <Text style={styles.welcomeTitle}>Your Campus, At a Glance</Text>
+              <Text style={styles.welcomeSubtitle}>A simpler way to find the places that matter at CTU.</Text>
+            </View>
+          )}
+          <View style={[styles.panel, { backgroundColor: colors.card, width: isWide ? "55%" : "100%", maxWidth: isWide ? undefined : 430 }]}>
           {!isWide && <Image source={LOGO} style={styles.logo} />}
 
           {mode === "welcome" && (
@@ -493,6 +496,7 @@ export default function LoginScreen() {
 
           {error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
           {notice && <Text style={[styles.notice, { color: colors.primary }]}>{notice}</Text>}
+          </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -501,12 +505,15 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  screenContent: { flexGrow: 1, justifyContent: "center", alignItems: "center", gap: 20 },
-  welcomePanel: { width: "38%", maxWidth: 390, minHeight: 560, alignItems: "center", justifyContent: "center", padding: 36, borderRadius: 24 },
+  screenContent: { flexGrow: 1, justifyContent: "center", alignItems: "center" },
+  authShell: { width: "100%", overflow: "hidden", borderRadius: 24, boxShadow: "0px 18px 24px rgba(0, 0, 0, 0.16)" },
+  authShellWide: { maxWidth: 1100, minHeight: 560, flexDirection: "row" },
+  authShellNarrow: { maxWidth: 430 },
+  welcomePanel: { width: "45%", minHeight: 560, alignItems: "center", justifyContent: "center", padding: 40, backgroundColor: "#800000" },
   welcomeLogo: { width: 96, height: 96, borderRadius: 24, marginBottom: 28 },
   welcomeTitle: { color: "#FFFFFF", fontSize: 30, fontFamily: "Inter_700Bold", textAlign: "center", marginBottom: 12 },
   welcomeSubtitle: { color: "rgba(255,255,255,0.78)", fontSize: 15, lineHeight: 23, fontFamily: "Inter_400Regular", textAlign: "center", maxWidth: 280 },
-  panel: { width: "100%", alignSelf: "center", borderWidth: 1, borderRadius: 24, padding: 28, gap: 12, overflow: "hidden" },
+  panel: { width: "100%", alignSelf: "center", padding: 36, gap: 12, overflow: "hidden" },
   logo: { width: 72, height: 72, borderRadius: 18, alignSelf: "center", marginBottom: 8 },
   title: { fontSize: 24, fontFamily: "Inter_700Bold", textAlign: "center" },
   subtitle: { fontSize: 14, lineHeight: 21, fontFamily: "Inter_400Regular", textAlign: "center", marginBottom: 8 },
