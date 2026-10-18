@@ -1,11 +1,26 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
-import { ImagePlus, RefreshCw, Save } from "lucide-react";
+import { ImagePlus, RefreshCw, Save, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import FloorPlanMapEditor, { type FloorPlanBounds } from "@/components/FloorPlanMapEditor";
 import { ADMIN_CAMPUSES, DEFAULT_ADMIN_CAMPUS } from "@/lib/campuses";
 
 const FLOOR_LEVELS = ["Ground", "2F", "3F", "4F"] as const;
 type FloorLevel = typeof FLOOR_LEVELS[number];
+type FloorColors = Record<FloorLevel, string>;
+
+const DEFAULT_FLOOR_COLORS: FloorColors = {
+  Ground: "#22C55E",
+  "2F": "#EAB308",
+  "3F": "#3B82F6",
+  "4F": "#EF4444",
+};
+
+const FLOOR_LABELS: Record<FloorLevel, string> = {
+  Ground: "Ground floor",
+  "2F": "2nd floor",
+  "3F": "3rd floor",
+  "4F": "4th floor",
+};
 
 type CampusFloorPlan = {
   campusName: string;
@@ -35,6 +50,11 @@ export default function CampusFloorPlansPage() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [floorColors, setFloorColors] = useState<FloorColors>(DEFAULT_FLOOR_COLORS);
+  const [colorsLoading, setColorsLoading] = useState(true);
+  const [colorsSaving, setColorsSaving] = useState(false);
+  const [colorsError, setColorsError] = useState<string | null>(null);
+  const [colorsMessage, setColorsMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const selectedCampus = ADMIN_CAMPUSES.find((campus) => campus.name === campusName) ?? DEFAULT_ADMIN_CAMPUS;
 
@@ -45,14 +65,16 @@ export default function CampusFloorPlansPage() {
       setError(null);
       setMessage(null);
       try {
-        const params = new URLSearchParams({ campusName, floorLevel });
+        const params = new URLSearchParams({ campusName });
         const response = await fetch(`/api/campus-floor-plans?${params}`, { credentials: "same-origin" });
         const plans = await response.json();
         if (!response.ok) throw new Error(plans?.error || "Could not load this floor plan.");
         if (!active) return;
-        const plan = (plans as CampusFloorPlan[]).find((item) => item.campusName === campusName && item.floorLevel === floorLevel);
+        const campusPlans = (plans as CampusFloorPlan[]).filter((item) => item.campusName === campusName);
+        const plan = campusPlans.find((item) => item.floorLevel === floorLevel);
+        const referencePlan = campusPlans.find((item) => item.floorLevel === "Ground") ?? campusPlans[0];
         setImageUrl(plan?.imageUrl ?? null);
-        setBounds(plan?.bounds ?? defaultBounds(selectedCampus.latitude, selectedCampus.longitude));
+        setBounds(plan?.bounds ?? referencePlan?.bounds ?? defaultBounds(selectedCampus.latitude, selectedCampus.longitude));
         setFileName(null);
       } catch (reason) {
         if (!active) return;
@@ -67,6 +89,48 @@ export default function CampusFloorPlansPage() {
     void loadPlan();
     return () => { active = false; };
   }, [campusName, floorLevel, selectedCampus.latitude, selectedCampus.longitude]);
+
+  useEffect(() => {
+    let active = true;
+    const loadColors = async () => {
+      setColorsLoading(true);
+      setColorsError(null);
+      try {
+        const response = await fetch("/api/floor-colors", { credentials: "same-origin" });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data?.error || "Could not load floor colors.");
+        if (active) setFloorColors({ ...DEFAULT_FLOOR_COLORS, ...data });
+      } catch (reason) {
+        if (active) setColorsError(reason instanceof Error ? reason.message : "Could not load floor colors.");
+      } finally {
+        if (active) setColorsLoading(false);
+      }
+    };
+    void loadColors();
+    return () => { active = false; };
+  }, []);
+
+  const saveFloorColors = async () => {
+    setColorsSaving(true);
+    setColorsError(null);
+    setColorsMessage(null);
+    try {
+      const response = await fetch("/api/admin/floor-colors", {
+        method: "PUT",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ colors: floorColors }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.error || "Could not save floor colors.");
+      setFloorColors({ ...DEFAULT_FLOOR_COLORS, ...data });
+      setColorsMessage("Floor legend colors saved.");
+    } catch (reason) {
+      setColorsError(reason instanceof Error ? reason.message : "Could not save floor colors.");
+    } finally {
+      setColorsSaving(false);
+    }
+  };
 
   const uploadImage = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -114,6 +178,31 @@ export default function CampusFloorPlansPage() {
     }
   };
 
+  const deletePlan = async () => {
+    if (!imageUrl || !window.confirm(`Delete the ${floorLevel} floor plan for ${campusName}?`)) return;
+    setSaving(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const response = await fetch("/api/campus-floor-plans", {
+        method: "DELETE",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ campusName, floorLevel, imageUrl }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.error || "Could not delete this floor plan.");
+      setImageUrl(null);
+      setFileName(null);
+      setBounds(defaultBounds(selectedCampus.latitude, selectedCampus.longitude));
+      setMessage(`${campusName} ${floorLevel} floor plan deleted.`);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Could not delete this floor plan.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const resetPosition = () => {
     setBounds(defaultBounds(selectedCampus.latitude, selectedCampus.longitude));
     setMessage(null);
@@ -148,6 +237,33 @@ export default function CampusFloorPlansPage() {
         </label>
       </div>
 
+      <section className="space-y-3 border-b border-border pb-5">
+        <div>
+          <h2 className="text-sm font-semibold text-foreground">Floor legend colors</h2>
+          <p className="mt-1 text-xs text-muted-foreground">Choose the colors users see for each floor in the app.</p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {FLOOR_LEVELS.map((floor) => (
+            <label key={floor} className="flex items-center gap-3 text-sm font-medium">
+              <input
+                type="color"
+                aria-label={`${FLOOR_LABELS[floor]} legend color`}
+                value={floorColors[floor]}
+                onChange={(event) => setFloorColors((current) => ({ ...current, [floor]: event.target.value }))}
+                disabled={colorsLoading || colorsSaving}
+                className="h-9 w-12 cursor-pointer rounded border border-input bg-transparent p-1"
+              />
+              <span>{FLOOR_LABELS[floor]}</span>
+            </label>
+          ))}
+        </div>
+        {colorsError && <p role="alert" className="text-sm text-destructive">{colorsError}</p>}
+        {colorsMessage && <p role="status" className="text-sm text-emerald-700">{colorsMessage}</p>}
+        <Button type="button" onClick={() => void saveFloorColors()} disabled={colorsLoading || colorsSaving} className="gap-2">
+          <Save className="h-4 w-4" />{colorsSaving ? "Saving colors..." : "Save colors"}
+        </Button>
+      </section>
+
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
       {message && <p role="status" className="text-sm text-emerald-700">{message}</p>}
 
@@ -165,6 +281,7 @@ export default function CampusFloorPlansPage() {
           {loading ? "Loading saved floor plan..." : fileName ? `Selected image: ${fileName}` : imageUrl ? "Saved floor-plan image" : "No image uploaded for this floor yet."}
         </p>
         <div className="flex gap-2">
+          {imageUrl && <Button type="button" variant="destructive" onClick={() => void deletePlan()} disabled={loading || saving || uploading} className="gap-2"><Trash2 className="h-4 w-4" />Delete image</Button>}
           <Button type="button" variant="outline" onClick={resetPosition} disabled={loading || saving || !imageUrl}>Reset position</Button>
           <Button type="button" onClick={() => void savePlan()} disabled={loading || saving || uploading || !imageUrl} className="gap-2">
             <Save className="h-4 w-4" />{saving ? "Saving..." : "Save floor plan"}

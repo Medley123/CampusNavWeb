@@ -80,6 +80,7 @@ export default function FloorPlanMapEditor({ latitude, longitude, imageUrl, boun
     const currentBounds = boundsRef.current;
     overlayRef.current?.remove();
     overlayRef.current = L.imageOverlay(imageUrl, toLeafletBounds(currentBounds), { opacity: 0.82, zIndex: 400 }).addTo(map);
+    overlayRef.current.getElement()?.style.setProperty("object-fit", "contain");
 
     const moveIcon = L.divIcon({
       className: "floor-plan-map-handle",

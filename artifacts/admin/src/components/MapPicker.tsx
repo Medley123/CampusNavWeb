@@ -156,6 +156,7 @@ export default function MapPicker({ latitude, longitude, campusName, floorLevels
       [activePlan.bounds.north, activePlan.bounds.east],
     );
     overlayRef.current = L.imageOverlay(activePlan.imageUrl, bounds, { opacity: 0.82, zIndex: 400 }).addTo(map);
+    overlayRef.current.getElement()?.style.setProperty("object-fit", "contain");
     map.fitBounds(bounds.pad(0.5), { maxZoom: 19 });
 
     return () => {

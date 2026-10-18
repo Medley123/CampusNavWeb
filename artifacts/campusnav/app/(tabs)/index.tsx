@@ -47,6 +47,15 @@ type CampusFloorPlan = {
   bounds: { north: number; south: number; east: number; west: number };
 };
 
+type FloorColors = Record<FloorLevel, string>;
+
+const DEFAULT_FLOOR_COLORS: FloorColors = {
+  Ground: "#22C55E",
+  "2F": "#EAB308",
+  "3F": "#3B82F6",
+  "4F": "#EF4444",
+};
+
 function getCampusFloorPlansApiUrl() {
   return `${getApiBaseUrl()}/api/campus-floor-plans`;
 }
@@ -56,6 +65,12 @@ async function fetchCampusFloorPlans(): Promise<CampusFloorPlan[]> {
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const data = await response.json();
   return Array.isArray(data) ? data : [];
+}
+
+async function fetchFloorColors(): Promise<FloorColors> {
+  const response = await fetch(`${getApiBaseUrl()}/api/floor-colors`);
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return { ...DEFAULT_FLOOR_COLORS, ...await response.json() };
 }
 
 const MIN_LAT = 10.5022;
@@ -199,6 +214,7 @@ export default function MapScreen() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [currentFloor, setCurrentFloor] = useState<FloorLevel>("Ground");
   const [floorPlans, setFloorPlans] = useState<CampusFloorPlan[]>([]);
+  const [floorColors, setFloorColors] = useState<FloorColors>(DEFAULT_FLOOR_COLORS);
   const location = useLocation();
   const isWeb = Platform.OS === "web";
   const {
@@ -218,9 +234,22 @@ export default function MapScreen() {
       }
     };
 
+    const loadFloorColors = async () => {
+      try {
+        const data = await fetchFloorColors();
+        if (active) setFloorColors(data);
+      } catch {
+        if (active) setFloorColors(DEFAULT_FLOOR_COLORS);
+      }
+    };
+
     void loadFloorPlans();
+    void loadFloorColors();
     const subscription = AppState.addEventListener("change", (state) => {
-      if (state === "active") void loadFloorPlans();
+      if (state === "active") {
+        void loadFloorPlans();
+        void loadFloorColors();
+      }
     });
 
     return () => {
@@ -341,6 +370,9 @@ export default function MapScreen() {
   void fetchCampusFloorPlans()
     .then(setFloorPlans)
     .catch(() => setFloorPlans([]));
+  void fetchFloorColors()
+    .then(setFloorColors)
+    .catch(() => setFloorColors(DEFAULT_FLOOR_COLORS));
 
   if (!isWeb) {
     mapRef.current?.animateToRegion(getCampusRegion(selectedCampus), 500);
@@ -402,7 +434,7 @@ export default function MapScreen() {
             />
           </Pressable>
 
-          <View style={[styles.currentFloorLabel, { backgroundColor: colors.primary }]}>
+          <View style={[styles.currentFloorLabel, { backgroundColor: floorColors[currentFloor] }]}>
             <Text style={styles.currentFloorText}>{floorDisplayNames[currentFloor]}</Text>
           </View>
 
@@ -421,6 +453,26 @@ export default function MapScreen() {
               color={canMoveDown ? colors.primary : colors.border}
             />
           </Pressable>
+      </View>
+
+      <View
+        pointerEvents="none"
+        style={[
+          styles.floorLegend,
+          {
+            bottom: isWeb ? 92 : bottomPad + 58,
+            right: Math.max(8, width * 0.25 - 78),
+            backgroundColor: colors.card + "F0",
+            borderColor: colors.border,
+          },
+        ]}
+      >
+        {FLOOR_LEVELS.map((floor) => (
+          <View key={floor} style={styles.floorLegendItem}>
+            <View style={[styles.floorLegendSwatch, { backgroundColor: floorColors[floor] }]} />
+            <Text style={[styles.floorLegendText, { color: colors.foreground }]}>{floorDisplayNames[floor]}</Text>
+          </View>
+        ))}
       </View>
 
       <MapView
@@ -1228,6 +1280,38 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 8,
     elevation: 5,
+  },
+  floorLegend: {
+    position: "absolute",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 6,
+    width: 156,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    zIndex: 19,
+    shadowColor: "#17301F",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.14,
+    shadowRadius: 5,
+    elevation: 4,
+  },
+  floorLegendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  floorLegendSwatch: {
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+  },
+  floorLegendText: {
+    fontSize: 10,
+    fontFamily: "Inter_600SemiBold",
   },
   floorArrowButton: {
     width: 40,
