@@ -79,7 +79,7 @@ export default function MapPicker({ latitude, longitude, campusName, floorLevels
     });
 
     L.tileLayer("https://tile.openstreetmap.de/{z}/{x}/{y}.png", {
-      attribution: "© OpenStreetMap contributors",
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 19,
     }).addTo(map);
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Users, RefreshCw } from "lucide-react";
+import { Users, RefreshCw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -15,6 +15,7 @@ type CampusUser = {
 export default function UsersPage() {
   const [users, setUsers] = useState<CampusUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingEmail, setDeletingEmail] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const loadUsers = async () => {
@@ -35,6 +36,27 @@ export default function UsersPage() {
   useEffect(() => {
     loadUsers();
   }, []);
+
+  const deleteUser = async (user: CampusUser) => {
+    if (!window.confirm(`Delete the CampusNav account for ${user.email}? This cannot be undone.`)) return;
+    setDeletingEmail(user.email);
+    setError(null);
+    try {
+      const response = await fetch(`/api/users/${encodeURIComponent(user.email)}`, {
+        method: "DELETE",
+        credentials: "same-origin",
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error || "Failed to delete user.");
+      }
+      await loadUsers();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Failed to delete user.");
+    } finally {
+      setDeletingEmail(null);
+    }
+  };
 
   return (
     <div className="p-4 space-y-5 sm:p-6 sm:space-y-6">
@@ -70,6 +92,7 @@ export default function UsersPage() {
                     <th className="px-4 py-3 font-medium">User</th>
                     <th className="px-4 py-3 font-medium">Username</th>
                     <th className="px-4 py-3 font-medium">Last login</th>
+                    <th className="px-4 py-3 text-right font-medium">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -90,6 +113,19 @@ export default function UsersPage() {
                       <td className="px-4 py-3 font-medium text-primary">@{user.username}</td>
                       <td className="px-4 py-3 text-muted-foreground">
                         {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : "-"}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          title="Delete user"
+                          aria-label={`Delete ${user.email}`}
+                          disabled={deletingEmail === user.email}
+                          onClick={() => void deleteUser(user)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
                       </td>
                     </tr>
                   ))}

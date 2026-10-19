@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { AppState, Platform } from "react-native";
 import { Building } from "@/constants/buildings";
 import { getApiBaseUrl } from "@/utils/api";
 
@@ -77,7 +78,24 @@ const mapped: Building[] = buildingData.map((b) => ({
   }, []);
 
   useEffect(() => {
-    fetchBuildings();
+    void fetchBuildings();
+
+    if (Platform.OS === "web") {
+      const refreshOnFocus = () => {
+        if (!document.hidden) void fetchBuildings(true);
+      };
+      window.addEventListener("focus", refreshOnFocus);
+      document.addEventListener("visibilitychange", refreshOnFocus);
+      return () => {
+        window.removeEventListener("focus", refreshOnFocus);
+        document.removeEventListener("visibilitychange", refreshOnFocus);
+      };
+    }
+
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") void fetchBuildings(true);
+    });
+    return () => subscription.remove();
   }, [fetchBuildings]);
 
   return { buildings, loading, error, refetch: () => fetchBuildings(true) };

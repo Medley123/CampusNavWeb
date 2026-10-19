@@ -185,15 +185,71 @@
   --shadow-2xl: 0px 25px 50px -12px rgba(0,0,0,0.5);
 }
 
+.super-admin-main {
+  background: hsl(0 100% 25.1%);
+  color: hsl(48 100% 82%);
+  --primary: 48 100% 50%;
+  --primary-foreground: 345 42% 14%;
+  --primary-border: hsl(48 80% 42%);
+}
+
+.super-admin-main .text-foreground {
+  color: hsl(48 100% 82%);
+}
+
+.super-admin-main .text-muted-foreground {
+  color: hsl(48 45% 76%);
+}
+
+.super-admin-main .bg-card .text-foreground {
+  color: hsl(var(--foreground));
+}
+
+.super-admin-main .bg-card .text-muted-foreground {
+  color: hsl(var(--muted-foreground));
+}
+
+.campus-admin-main {
+  background: hsl(48 100% 50%);
+  color: hsl(345 42% 14%);
+}
+
+.campus-admin-main .text-foreground {
+  color: hsl(345 42% 14%);
+}
+
+.campus-admin-main .text-muted-foreground {
+  color: hsl(345 25% 35%);
+}
+
+.campus-admin-main .bg-card .text-foreground {
+  color: hsl(var(--card-foreground));
+}
+
+.campus-admin-main .bg-card .text-muted-foreground {
+  color: hsl(var(--muted-foreground));
+}
+
 .super-admin-sidebar {
   --sidebar: 48 100% 50%;
   --sidebar-foreground: 345 42% 14%;
   --sidebar-border: 45 80% 42%;
-  --sidebar-primary: 345 42% 14%;
+  --sidebar-primary: 0 100% 25.1%;
   --sidebar-primary-foreground: 48 100% 50%;
-  --sidebar-accent: 45 85% 42%;
-  --sidebar-accent-foreground: 345 42% 14%;
+  --sidebar-accent: 0 100% 25.1%;
+  --sidebar-accent-foreground: 48 100% 50%;
   --sidebar-ring: 345 42% 14%;
+}
+
+.campus-admin-sidebar {
+  --sidebar: 0 100% 25.1%;
+  --sidebar-foreground: 48 100% 82%;
+  --sidebar-border: 345 50% 14%;
+  --sidebar-primary: 48 100% 50%;
+  --sidebar-primary-foreground: 345 42% 14%;
+  --sidebar-accent: 48 100% 50%;
+  --sidebar-accent-foreground: 345 42% 14%;
+  --sidebar-ring: 48 100% 50%;
 }
 
 .floor-plan-map-handle {

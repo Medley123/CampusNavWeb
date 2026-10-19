@@ -2,7 +2,7 @@ import { Router } from "express";
 import { createHash, randomBytes, randomInt, scryptSync, timingSafeEqual } from "node:crypto";
 import { supabase } from "../lib/supabase.js";
 import { isAdminEmailConfigured, sendUserPasswordResetCode } from "../lib/admin-email.js";
-import { requireAdmin } from "../middlewares/admin-auth.js";
+import { requireAdmin, requireSuperAdmin } from "../middlewares/admin-auth.js";
 
 const router = Router();
 const COL = "users";
@@ -312,6 +312,32 @@ router.get("/users", requireAdmin, async (req, res) => {
   } catch (err) {
     req.log.error({ err }, "Failed to list users");
     res.status(500).json({ error: "Failed to fetch users." });
+  }
+});
+
+router.delete("/users/:email", requireSuperAdmin, async (req, res) => {
+  const email = typeof req.params.email === "string" ? req.params.email.trim().toLowerCase() : "";
+  if (!validEmail(email)) {
+    res.status(400).json({ error: "Invalid user email." });
+    return;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("users")
+      .delete()
+      .eq("email", email)
+      .select("email")
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) {
+      res.status(404).json({ error: "User not found." });
+      return;
+    }
+    res.status(204).end();
+  } catch (err) {
+    req.log.error({ err }, "Failed to delete user");
+    res.status(500).json({ error: "Failed to delete user." });
   }
 });
 

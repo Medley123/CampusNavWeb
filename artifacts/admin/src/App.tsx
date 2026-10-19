@@ -53,7 +53,7 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <aside className={cn(
       "fixed inset-y-0 left-0 z-50 w-64 flex-shrink-0 bg-sidebar flex flex-col h-screen transition-transform duration-200 md:sticky md:z-auto md:translate-x-0",
-      isSuperAdmin && "super-admin-sidebar",
+      isSuperAdmin ? "super-admin-sidebar" : "campus-admin-sidebar",
       open ? "translate-x-0" : "-translate-x-full",
     )}>
       <div className="px-5 py-6 border-b border-sidebar-border">
@@ -94,8 +94,8 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
           <>
             <NavItem href="/dashboard" icon={LayoutDashboard} label="Dashboard" onNavigate={onClose} />
             <NavItem href="/" icon={Building2} label="Campus Admins" onNavigate={onClose} />
-            <NavItem href="/users" icon={Users} label="Users" onNavigate={onClose} />
             <NavItem href="/floor-plans" icon={Map} label="Floor Plans" onNavigate={onClose} />
+            <NavItem href="/users" icon={Users} label="Users" onNavigate={onClose} />
             <NavItem href="/app-updates" icon={Info} label="App Info & Updates" onNavigate={onClose} />
             <NavItem href="/feedback" icon={MessageSquare} label="Feedback" onNavigate={onClose} />
             <NavItem href="/settings" icon={Settings} label="Settings" onNavigate={onClose} />
@@ -143,6 +143,7 @@ function DashboardPage() {
 
 function AppLayout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { role } = useAdminAuth();
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -155,7 +156,11 @@ function AppLayout({ children }: { children: ReactNode }) {
           className="fixed inset-0 z-40 bg-black/50 md:hidden"
         />
       )}
-      <main className="min-w-0 flex-1 overflow-auto">
+      <main className={cn(
+        "min-w-0 flex-1 overflow-auto",
+        role === "super_admin" && "super-admin-main",
+        role === "campus_admin" && "campus-admin-main",
+      )}>
         <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-background/95 px-4 backdrop-blur md:hidden">
           <button
             type="button"

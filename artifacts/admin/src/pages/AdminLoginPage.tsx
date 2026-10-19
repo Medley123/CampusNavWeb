@@ -22,7 +22,7 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#eef1f3] p-4 sm:p-8">
+    <main className="flex min-h-screen items-center justify-center bg-[#FFCC00] p-4 sm:p-8">
       <div className="grid w-full max-w-5xl overflow-hidden rounded-3xl bg-card shadow-2xl md:min-h-[600px] md:grid-cols-[0.9fr_1.1fr]">
         <section className="relative flex flex-col items-center justify-center overflow-hidden bg-[#800000] px-8 py-10 text-center text-white sm:px-12 md:py-14">
           <div className="absolute -right-20 -top-24 h-64 w-64 rounded-full border border-white/10" />

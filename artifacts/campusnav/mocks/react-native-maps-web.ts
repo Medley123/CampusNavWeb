@@ -153,7 +153,7 @@ const MapView = React.forwardRef<
     React.createElement(TileLayer, {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      url: "https://tile.openstreetmap.de/{z}/{x}/{y}.png",
     }),
     React.createElement(MapController, {
       onMapReady: handleMapReady,
@@ -206,7 +206,7 @@ function MarkerComponent(props: MarkerProps) {
       position: [coordinate.latitude, coordinate.longitude],
       icon: L.divIcon({
         className: "campus-leaflet-marker",
-        html: `<span style="display:flex;align-items:center;gap:6px;transform:translate(-17px,-34px)"><span style="display:flex;flex:0 0 34px;width:34px;height:34px;align-items:center;justify-content:center;background:${color};border:2px solid #fff;border-radius:50% 50% 50% 0;box-shadow:0 2px 5px rgba(0,0,0,.3);transform:rotate(-45deg)"><span style="display:block;width:11px;height:11px;background:#fff;border-radius:50%"></span></span><span style="display:block;background:#fff;color:#800000;padding:5px 8px;border-radius:6px;font:700 11px Inter,sans-serif;white-space:nowrap;box-shadow:0 2px 5px rgba(0,0,0,.2)">${String(title || "Building").replace(/[&<>\"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character] || character)}</span></span>`,
+        html: `<span style="display:flex;align-items:center;gap:6px"><span style="display:flex;flex:0 0 34px;width:34px;height:34px;align-items:center;justify-content:center;background:${color};border:2px solid #fff;border-radius:50% 50% 50% 0;box-shadow:0 2px 5px rgba(0,0,0,.3);transform:rotate(-45deg)"><span style="display:block;width:11px;height:11px;background:#fff;border-radius:50%"></span></span><span style="display:block;background:#fff;color:#800000;padding:5px 8px;border-radius:6px;font:700 11px Inter,sans-serif;white-space:nowrap;box-shadow:0 2px 5px rgba(0,0,0,.2)">${String(title || "Building").replace(/[&<>\"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character] || character)}</span></span>`,
         iconSize: [180, 40],
         iconAnchor: [17, 34],
       }),

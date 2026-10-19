@@ -28,6 +28,7 @@ const LOGO = require("../assets/images/cmpslogo.png");
 const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
 const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
 const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
+const GOOGLE_SIGN_IN_ENABLED = process.env.EXPO_PUBLIC_GOOGLE_SIGN_IN_ENABLED === "true";
 const API_URL = getApiBaseUrl();
 
 function GoogleSignInButton({
@@ -265,7 +266,7 @@ export default function LoginScreen() {
     setNotice(null);
   };
 
-  const renderGoogleButton = () => hasClientId ? (
+  const renderGoogleButton = () => !GOOGLE_SIGN_IN_ENABLED ? null : hasClientId ? (
     <GoogleSignInButton
       disabled={busy}
       onProfile={handleGoogleProfile}
@@ -278,7 +279,7 @@ export default function LoginScreen() {
     <Text style={[styles.hint, { color: colors.mutedForeground }]}>Google sign-in is not configured.</Text>
   );
 
-  const renderDivider = () => (
+  const renderDivider = () => !GOOGLE_SIGN_IN_ENABLED ? null : (
     <View style={styles.dividerRow}>
       <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
       <Text style={[styles.dividerText, { color: colors.mutedForeground }]}>Or</Text>
@@ -297,7 +298,7 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={[styles.screen, { backgroundColor: Platform.OS === "web" ? "#eef1f3" : colors.background }]}
+      style={[styles.screen, { backgroundColor: "#FFCC00" }]}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView
@@ -505,36 +506,151 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  screenContent: { flexGrow: 1, justifyContent: "center", alignItems: "center" },
-  authShell: { width: "100%", overflow: "hidden", borderRadius: 24, boxShadow: "0px 18px 24px rgba(0, 0, 0, 0.16)" },
-  authShellWide: { maxWidth: 1100, minHeight: 560, flexDirection: "row" },
-  authShellNarrow: { maxWidth: 430 },
-  welcomePanel: { width: "45%", minHeight: 560, alignItems: "center", justifyContent: "center", padding: 40, backgroundColor: "#800000" },
-  welcomeLogo: { width: 96, height: 96, borderRadius: 24, marginBottom: 28 },
-  welcomeTitle: { color: "#FFFFFF", fontSize: 30, fontFamily: "Inter_700Bold", textAlign: "center", marginBottom: 12 },
-  welcomeSubtitle: { color: "rgba(255,255,255,0.78)", fontSize: 15, lineHeight: 23, fontFamily: "Inter_400Regular", textAlign: "center", maxWidth: 280 },
-  panel: { width: "100%", alignSelf: "center", padding: 36, gap: 12, overflow: "hidden" },
-  logo: { width: 72, height: 72, borderRadius: 18, alignSelf: "center", marginBottom: 8 },
-  title: { fontSize: 24, fontFamily: "Inter_700Bold", textAlign: "center" },
-  subtitle: { fontSize: 14, lineHeight: 21, fontFamily: "Inter_400Regular", textAlign: "center", marginBottom: 8 },
+  screenContent: { 
+    flexGrow: 1, 
+    justifyContent: "center", 
+    alignItems: "center" },
+  authShell: { 
+    width: "100%", 
+    overflow: "hidden", 
+    borderRadius: 24, 
+    boxShadow: "0px 18px 24px rgba(0, 0, 0, 0.16)" },
+  authShellWide: { 
+    maxWidth: 1100, 
+    minHeight: 560, 
+    flexDirection: "row" },
+  authShellNarrow: { 
+    maxWidth: 430 },
+  welcomePanel: { 
+    width: "45%", 
+    minHeight: 560, 
+    alignItems: "center", 
+    justifyContent: "center", 
+    padding: 40, 
+    backgroundColor: "#800000" },
+  welcomeLogo: { 
+    width: 96, 
+    height: 96, 
+    borderRadius: 24, 
+    marginBottom: 28 },
+  welcomeTitle: { 
+    color: "#FFFFFF", 
+    fontSize: 30, 
+    fontFamily: "Inter_700Bold", 
+    textAlign: "center", 
+    marginBottom: 12 },
+  welcomeSubtitle: { 
+    color: "rgba(255,255,255,0.78)", 
+    fontSize: 15, 
+    lineHeight: 23, 
+    fontFamily: "Inter_400Regular", 
+    textAlign: "center", 
+    maxWidth: 280 },
+  panel: { 
+    width: "100%", 
+    alignSelf: "center", 
+    padding: 36, 
+    gap: 12, 
+    overflow: "hidden" },
+  logo: { 
+    width: 72, 
+    height: 72, 
+    borderRadius: 18, 
+    alignSelf: "center", 
+    marginBottom: 8 },
+  title: { 
+    fontSize: 24, 
+    fontFamily: "Inter_700Bold", 
+    textAlign: "center" },
+  subtitle: { 
+    fontSize: 14, 
+    lineHeight: 21, 
+    fontFamily: "Inter_400Regular", 
+    textAlign: "center", 
+    marginBottom: 8 },
   form: { gap: 10 },
-  signedIn: { fontSize: 13, fontFamily: "Inter_500Medium", textAlign: "center", marginBottom: 4 },
-  label: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
-  input: { height: 48, borderWidth: 1, borderRadius: 10, paddingHorizontal: 14, fontSize: 15, fontFamily: "Inter_400Regular" },
-  button: { minHeight: 48, borderRadius: 10, alignItems: "center", justifyContent: "center", paddingHorizontal: 16, marginTop: 4 },
-  buttonText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: "#FFFFFF" },
-  googleButton: { backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#DADCE0" },
-  googleButtonContent: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 },
-  googleButtonText: { color: "#32141F", fontSize: 15, fontFamily: "Inter_500Medium" },
-  dividerRow: { flexDirection: "row", alignItems: "center", gap: 12, marginVertical: 4 },
-  dividerLine: { flex: 1, height: 1 },
-  dividerText: { fontSize: 13, fontFamily: "Inter_400Regular" },
-  footerRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, flexWrap: "wrap", marginTop: 8 },
-  forgotLink: { alignSelf: "flex-end", paddingVertical: 2 },
-  resendButton: { alignSelf: "center", padding: 8 },
-  link: { fontSize: 13, fontFamily: "Inter_500Medium" },
-  error: { color: "#C53030", fontSize: 13, fontFamily: "Inter_500Medium", textAlign: "center" },
-  notice: { fontSize: 13, lineHeight: 19, fontFamily: "Inter_500Medium", textAlign: "center" },
-  hint: { fontSize: 12, lineHeight: 17, textAlign: "center" },
-  footer: { fontSize: 12, textAlign: "center", marginTop: 8 },
+  signedIn: { 
+    fontSize: 13, 
+    fontFamily: "Inter_500Medium", 
+    textAlign: "center", 
+    marginBottom: 4 },
+  label: { 
+    fontSize: 13, 
+    fontFamily: "Inter_600SemiBold" },
+  input: { 
+    height: 48, 
+    borderWidth: 1, 
+    borderRadius: 10, 
+    paddingHorizontal: 14, 
+    fontSize: 15, 
+    fontFamily: "Inter_400Regular" },
+  button: { 
+    minHeight: 48, 
+    borderRadius: 10, 
+    alignItems: "center", 
+    justifyContent: "center", 
+    paddingHorizontal: 16, 
+    marginTop: 4 },
+  buttonText: { 
+    fontSize: 15, 
+    fontFamily: "Inter_600SemiBold", 
+    color: "#FFFFFF" },
+  googleButton: { 
+    backgroundColor: "#FFFFFF", 
+    borderWidth: 1, 
+    borderColor: "#DADCE0" },
+  googleButtonContent: { 
+    flexDirection: "row", 
+    alignItems: "center", 
+    justifyContent: "center", 
+    gap: 10 },
+  googleButtonText: { 
+    color: "#32141F", 
+    fontSize: 15, 
+    fontFamily: "Inter_500Medium" },
+  dividerRow: { 
+    flexDirection: "row", 
+    alignItems: "center", 
+    gap: 12, 
+    marginVertical: 4 },
+  dividerLine: { 
+    flex: 1, 
+    height: 1 },
+  dividerText: { 
+    fontSize: 13, 
+    fontFamily: "Inter_400Regular" },
+  footerRow: { 
+    flexDirection: "row", 
+    alignItems: "center", 
+    justifyContent: "center", 
+    gap: 4, 
+    flexWrap: "wrap", 
+    marginTop: 8 },
+  forgotLink: { 
+    alignSelf: "flex-end", 
+    paddingVertical: 2 },
+  resendButton: { 
+    alignSelf: "center", 
+    padding: 8 },
+  link: { 
+    fontSize: 13, 
+    fontFamily: "Inter_500Medium" },
+  error: { 
+    color: "#C53030", 
+    fontSize: 13, 
+    fontFamily: "Inter_500Medium", 
+    textAlign: "center" },
+  notice: { 
+    fontSize: 13, 
+    lineHeight: 19, 
+    fontFamily: "Inter_500Medium", 
+    textAlign: "center" },
+  hint: { 
+    fontSize: 12, 
+    lineHeight: 17, 
+    textAlign: "center" },
+  footer: { 
+    fontSize: 12, 
+    textAlign: "center", 
+    marginTop: 8 },
 });
