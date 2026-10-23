@@ -186,19 +186,18 @@
 }
 
 .super-admin-main {
-  background: hsl(0 100% 25.1%);
-  color: hsl(48 100% 82%);
+  background: #e1eef5;
+  color: #0284c7;
   --primary: 48 100% 50%;
   --primary-foreground: 345 42% 14%;
-  --primary-border: #3049c7;
 }
 
 .super-admin-main .text-foreground {
-  color: hsl(48 100% 82%);
+  color: #0284c7;
 }
 
 .super-admin-main .text-muted-foreground {
-  color: hsl(48 45% 76%);
+  color: hsl(199 89% 40%);
 }
 
 .super-admin-main .bg-card .text-foreground {
@@ -210,29 +209,23 @@
 }
 
 .campus-admin-main {
-  background: hsl(48 100% 50%);
+  background: #e1eef5;
   color: hsl(345 42% 14%);
+  --primary: 199 89% 48%;
+  --primary-foreground: 0 0% 100%;
+  --primary-border: #0284c7;
 }
 
 .campus-admin-main .text-foreground {
-  color: hsl(345 42% 14%);
+  color: hsl(199 89% 40%);
+}
+
+.campus-admin-main h1.text-foreground {
+  color: hsl(199 89% 40%);
 }
 
 .campus-admin-main .text-muted-foreground {
   color: hsl(345 25% 35%);
-}
-
-.campus-admin-main .bg-card .text-foreground {
-  color: hsl(var(--card-foreground));
-}
-
-.campus-admin-main .bg-card .text-muted-foreground {
-  color: hsl(var(--muted-foreground));
-}
-
-.super-admin-sidebar {
-  --sidebar: 48 100% 50%;
-  --sidebar-foreground: 345 42% 14%;
   --sidebar-border: 45 80% 42%;
   --sidebar-primary: 0 100% 25.1%;
   --sidebar-primary-foreground: 48 100% 50%;

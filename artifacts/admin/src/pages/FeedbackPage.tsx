@@ -74,9 +74,9 @@ export default function FeedbackPage() {
           <p className="text-sm">No feedback received yet.</p>
         </div>
       ) : (
-        <div className="divide-y divide-border">
+        <div className="space-y-3">
           {items.map((item) => (
-            <article key={item.id} className="flex flex-wrap items-start justify-between gap-4 py-4">
+            <article key={item.id} className="flex flex-wrap items-start justify-between gap-4 rounded-lg border border-border bg-card p-4 shadow-sm">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="font-medium">{item.userName || (item.username ? `@${item.username}` : "CampusNav user")}</p>

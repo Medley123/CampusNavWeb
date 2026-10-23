@@ -72,7 +72,7 @@ export function useActiveUsers(): number | null {
 
     return () => {
       listeners.delete(setCount);
-      if (listeners.size === 0) disconnect();
+      if (listeners.size === 0 && nameListeners.size === 0) disconnect();
     };
   }, []);
 

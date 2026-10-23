@@ -574,7 +574,7 @@ export default function BuildingFormModal({ open, onClose, building, onSuccess }
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isPending} className="bg-primary hover:bg-primary/90">
+              <Button type="submit" disabled={isPending} className="border-yellow-500 bg-yellow-400 text-yellow-950 hover:bg-yellow-500">
                 {isPending ? (isEditing ? "Saving..." : "Adding...") : isEditing ? "Save Changes" : "Add Building"}
               </Button>
             </DialogFooter>

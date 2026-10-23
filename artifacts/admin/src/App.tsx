@@ -18,6 +18,7 @@ import AdminSettingsPage from "@/pages/AdminSettingsPage";
 import CampusFloorPlansPage from "@/pages/CampusFloorPlansPage";
 import AppUpdatesPage from "@/pages/AppUpdatesPage";
 import FeedbackPage from "@/pages/FeedbackPage";
+import AdminChatPage from "@/pages/AdminChatPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -53,14 +54,14 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <aside className={cn(
       "fixed inset-y-0 left-0 z-50 w-64 flex-shrink-0 flex flex-col h-screen transition-transform duration-200 md:sticky md:z-auto md:translate-x-0",
-      isSuperAdmin ? "bg-blue-900" : "bg-blue-900",
+      "admin-sidebar bg-blue-900",
       open ? "translate-x-0" : "-translate-x-full",
     )}>
       <div className="px-5 py-6 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
           <div className="w-15 h-15 rounded-xl bg-primary/20 flex items-center justify-center">
             <img
-              src="/cmpslogo.png"
+              src="/CampusNav.png"
               alt="CampusNav logo"
               className="w-15 h-15 rounded-lg object-cover"
             />
@@ -98,12 +99,14 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
             <NavItem href="/users" icon={Users} label="Users" onNavigate={onClose} />
             <NavItem href="/app-updates" icon={Info} label="App Info & Updates" onNavigate={onClose} />
             <NavItem href="/feedback" icon={MessageSquare} label="Feedback" onNavigate={onClose} />
+            <NavItem href="/admin-chat" icon={MessageSquare} label="Admin Chat" onNavigate={onClose} />
             <NavItem href="/settings" icon={Settings} label="Settings" onNavigate={onClose} />
           </>
         ) : (
           <>
             <NavItem href="/" icon={LayoutDashboard} label="Dashboard" onNavigate={onClose} />
             <NavItem href="/buildings" icon={Building2} label="Buildings" onNavigate={onClose} />
+            <NavItem href="/admin-chat" icon={MessageSquare} label="Chat with Super Admin" onNavigate={onClose} />
             <NavItem href="/settings" icon={Settings} label="Settings" onNavigate={onClose} />
           </>
         )}
@@ -191,6 +194,7 @@ function Router() {
         <Route path="/floor-plans" component={role === "super_admin" ? CampusFloorPlansPage : NotFound} />
         <Route path="/app-updates" component={role === "super_admin" ? AppUpdatesPage : NotFound} />
         <Route path="/feedback" component={role === "super_admin" ? FeedbackPage : NotFound} />
+        <Route path="/admin-chat" component={role === "super_admin" || role === "campus_admin" ? AdminChatPage : NotFound} />
         <Route path="/settings" component={role === "super_admin" || role === "campus_admin" ? AdminSettingsPage : NotFound} />
         <Route component={NotFound} />
       </Switch>

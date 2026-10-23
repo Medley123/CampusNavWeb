@@ -113,10 +113,10 @@ export default function AppUpdatesPage() {
           <h2 className="font-semibold">{editingId ? "Edit app update" : "New app update"}</h2>
         </div>
         <label className="block space-y-1.5 text-sm font-medium">Title
-          <Input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} maxLength={120} required />
+          <Input className="bg-background text-foreground" value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} maxLength={120} required />
         </label>
         <label className="block space-y-1.5 text-sm font-medium">Update details
-          <Textarea value={form.body} onChange={(event) => setForm({ ...form, body: event.target.value })} maxLength={5000} rows={5} required />
+          <Textarea className="bg-background text-foreground" value={form.body} onChange={(event) => setForm({ ...form, body: event.target.value })} maxLength={5000} rows={5} required />
         </label>
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={form.isPublished} onChange={(event) => setForm({ ...form, isPublished: event.target.checked })} />
@@ -144,9 +144,9 @@ export default function AppUpdatesPage() {
         ) : updates.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">No app updates yet.</p>
         ) : (
-          <div className="divide-y divide-border">
+          <div className="space-y-3">
             {updates.map((update) => (
-              <article key={update.id} className="flex flex-wrap items-start justify-between gap-4 py-4">
+              <article key={update.id} className="flex flex-wrap items-start justify-between gap-4 rounded-lg border border-border bg-card p-4 shadow-sm">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="font-semibold">{update.title}</h3>

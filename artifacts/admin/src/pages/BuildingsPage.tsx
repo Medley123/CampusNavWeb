@@ -130,7 +130,7 @@ export default function BuildingsPage() {
           <Button
             size="sm"
             onClick={() => { setEditingBuilding(null); setFormOpen(true); }}
-            className="gap-2 bg-primary hover:bg-primary/90"
+            className="gap-2 border-yellow-500 bg-yellow-400 text-yellow-950 hover:bg-yellow-500"
           >
             <Plus className="w-4 h-4" />
             Add Building
@@ -148,19 +148,13 @@ export default function BuildingsPage() {
         {["academic", "admin", "facility", "sports"].map((cat) => {
           const Icon = CATEGORY_ICONS[cat] ?? Building2;
           const count = categoryStats.find((s) => s.category === cat)?.count ?? 0;
-          const colorMap: Record<string, string> = {
-            academic: "bg-blue-50 text-blue-600",
-            admin: "bg-rose-50 text-rose-600",
-            facility: "bg-orange-50 text-orange-600",
-            sports: "bg-purple-50 text-purple-600",
-          };
           return (
             <StatsCard
               key={cat}
               label={cat.charAt(0).toUpperCase() + cat.slice(1)}
               value={count}
               icon={Icon}
-              color={colorMap[cat] ?? "bg-muted text-muted-foreground"}
+              color="bg-primary/10 text-primary"
             />
           );
         })}

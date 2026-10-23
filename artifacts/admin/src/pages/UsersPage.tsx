@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Users, RefreshCw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useActiveUserNames, useActiveUsers } from "@/hooks/use-active-users";
 
 type CampusUser = {
   id: string;
@@ -17,6 +18,11 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [deletingEmail, setDeletingEmail] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const activeUsers = useActiveUsers();
+  const activeUserNames = useActiveUserNames();
+  const registeredUsernames = new Set(users.map((user) => user.username.toLowerCase()));
+  const activeRegisteredUsers = activeUserNames.filter((username) => registeredUsernames.has(username.toLowerCase())).length;
+  const activeGuestUsers = activeUsers === null ? null : Math.max(0, activeUsers - activeRegisteredUsers);
 
   const loadUsers = async () => {
     setLoading(true);
@@ -70,6 +76,33 @@ export default function UsersPage() {
         </Button>
       </div>
 
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Card className="shadow-sm">
+          <CardContent className="p-5">
+            <p className="text-sm text-muted-foreground">Total registered users</p>
+            <p className="mt-1 text-3xl font-bold">{loading ? "..." : users.length}</p>
+          </CardContent>
+        </Card>
+        <Card className="shadow-sm">
+          <CardContent className="p-5">
+            <p className="text-sm text-muted-foreground">Active users now</p>
+            <p className="mt-1 text-3xl font-bold">{activeUsers === null ? "..." : activeUsers}</p>
+          </CardContent>
+        </Card>
+        <Card className="shadow-sm">
+          <CardContent className="p-5">
+            <p className="text-sm text-muted-foreground">Signed-in users active now</p>
+            <p className="mt-1 text-3xl font-bold">{activeUsers === null ? "..." : activeRegisteredUsers}</p>
+          </CardContent>
+        </Card>
+        <Card className="shadow-sm">
+          <CardContent className="p-5">
+            <p className="text-sm text-muted-foreground">Guests active now</p>
+            <p className="mt-1 text-3xl font-bold">{activeGuestUsers === null ? "..." : activeGuestUsers}</p>
+          </CardContent>
+        </Card>
+      </div>
+
       <Card className="shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
@@ -110,7 +143,7 @@ export default function UsersPage() {
                           <span className="font-medium">{user.name}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 font-medium text-primary">@{user.username}</td>
+                      <td className="px-4 py-3 font-medium text-sky-600 dark:text-sky-400">@{user.username}</td>
                       <td className="px-4 py-3 text-muted-foreground">
                         {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : "-"}
                       </td>

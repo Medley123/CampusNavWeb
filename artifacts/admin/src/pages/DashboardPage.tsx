@@ -35,7 +35,7 @@ export default function DashboardPage({ campusName, isSuperAdmin = false }: { ca
         </div>
         {!isSuperAdmin && (
           <Link href="/buildings">
-            <Button size="sm" className="gap-2">
+            <Button size="sm" className="gap-2 border-yellow-500 bg-yellow-400 text-yellow-950 hover:bg-yellow-500">
               <Building2 className="w-4 h-4" />
               Manage Buildings
             </Button>
@@ -178,7 +178,7 @@ function SuperAdminDashboard({
   const recentUsers = users.slice(0, 5);
 
   return (
-    <div className="space-y-5 p-4 sm:space-y-6 sm:p-6 bg-[#e1eef5]">
+    <div className="space-y-5 p-4 sm:space-y-6 sm:p-6">
       <header>
         <h1 className="text-xl font-bold text-sky-600/90 sm:text-2xl">System Dashboard</h1>
         <p className="mt-0.5 text-sm text-sky-600/70">Systemwide campus coverage, administrator access, and user activity.</p>
