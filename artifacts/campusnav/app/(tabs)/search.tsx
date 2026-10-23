@@ -132,6 +132,7 @@ export default function SearchScreen() {
         {/* Category chips */}
         <FlatList
           horizontal
+          style={styles.chipScroll}
           data={CATEGORIES}
           keyExtractor={(item) => item.key}
           showsHorizontalScrollIndicator={false}
@@ -161,7 +162,7 @@ export default function SearchScreen() {
                 <Text
                   style={[
                     styles.chipText,
-                    { color: isActive ? "#fff" : colors.mutedForeground },
+                    { color: isActive ? "#fff" : colors.foreground },
                   ]}
                 >
                   {item.label}
@@ -256,9 +257,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     height: 46,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     marginBottom: 12,
   },
@@ -269,7 +270,11 @@ const styles = StyleSheet.create({
   },
   chipList: {
     paddingBottom: 8,
+    paddingHorizontal: 16,
     gap: 8,
+  },
+  chipScroll: {
+    marginHorizontal: -16,
   },
   chip: {
     paddingHorizontal: 16,

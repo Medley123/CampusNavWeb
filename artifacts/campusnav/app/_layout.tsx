@@ -24,7 +24,7 @@ SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
 
 function RootLayoutNav() {
-  const { user, loading } = useAuth();
+  const { user, isGuest, loading } = useAuth();
   const colors = useColors();
 
   if (loading) {
@@ -35,7 +35,7 @@ function RootLayoutNav() {
     );
   }
 
-  if (!user) return <LoginScreen />;
+  if (!user && !isGuest) return <LoginScreen />;
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

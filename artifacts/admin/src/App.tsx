@@ -33,8 +33,8 @@ function NavItem({ href, icon: Icon, label, onNavigate }: { href: string; icon: 
       <div className={cn(
         "flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer",
         isActive
-          ? "bg-sidebar-accent text-sidebar-accent-foreground"
-          : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+          ? "bg-sky-600 text-sidebar-accent-foreground"
+          : "text-sidebar-foreground/70 hover:bg-sky-600/50 hover:text-sidebar-foreground"
       )}>
         <Icon className="w-4 h-4 flex-shrink-0" />
         <span>{label}</span>
@@ -52,8 +52,8 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
 
   return (
     <aside className={cn(
-      "fixed inset-y-0 left-0 z-50 w-64 flex-shrink-0 bg-sidebar flex flex-col h-screen transition-transform duration-200 md:sticky md:z-auto md:translate-x-0",
-      isSuperAdmin ? "super-admin-sidebar" : "campus-admin-sidebar",
+      "fixed inset-y-0 left-0 z-50 w-64 flex-shrink-0 flex flex-col h-screen transition-transform duration-200 md:sticky md:z-auto md:translate-x-0",
+      isSuperAdmin ? "bg-blue-900" : "bg-blue-900",
       open ? "translate-x-0" : "-translate-x-full",
     )}>
       <div className="px-5 py-6 border-b border-sidebar-border">
@@ -74,7 +74,7 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
             aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
             title={`Switch to ${isDark ? "light" : "dark"} mode`}
             onClick={() => setTheme(isDark ? "light" : "dark")}
-            className="ml-auto inline-flex h-8 w-8 items-center justify-center rounded-md text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+            className="ml-auto inline-flex h-8 w-8 items-center justify-center rounded-md text-sidebar-foreground/70 transition-colors hover:bg-sky-600/50 hover:text-sidebar-foreground"
           >
             {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
@@ -120,7 +120,7 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
             aria-label="Sign out"
             title="Sign out"
             onClick={() => void logout()}
-            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-sidebar-foreground/70 transition-colors hover:bg-sky-600/50 hover:text-sidebar-foreground"
           >
             <LogOut className="h-4 w-4" />
           </button>

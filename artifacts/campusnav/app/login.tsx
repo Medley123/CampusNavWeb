@@ -24,7 +24,7 @@ import { getApiBaseUrl } from "@/utils/api";
 
 WebBrowser.maybeCompleteAuthSession();
 
-const LOGO = require("../assets/images/cmpslogo.png");
+const LOGO = require("../assets/images/CampusNav.png");
 const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
 const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
 const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
@@ -104,7 +104,7 @@ export default function LoginScreen() {
   const isWide = width >= 760;
   const activeColors = useColors();
   const colors = Platform.OS === "web" ? { ...activeColors, ...colorPalettes.light } : activeColors;
-  const { signIn } = useAuth();
+  const { signIn, continueAsGuest } = useAuth();
   const [mode, setMode] = useState<"welcome" | "login" | "signup" | "forgot" | "google-signup">("welcome");
   const [googleProfile, setGoogleProfile] = useState<{
     email: string;
@@ -296,6 +296,12 @@ export default function LoginScreen() {
     </View>
   );
 
+  const renderGuestLink = () => (
+    <Pressable onPress={continueAsGuest} hitSlop={8} style={styles.guestLink}>
+      <Text style={[styles.link, { color: colors.primary }]}>Continue without signing in or up</Text>
+    </Pressable>
+  );
+
   return (
     <KeyboardAvoidingView
       style={[styles.screen, { backgroundColor: "#FFCC00" }]}
@@ -320,11 +326,12 @@ export default function LoginScreen() {
             <>
               <Text style={[styles.title, { color: colors.foreground }]}>Welcome to CampusNav</Text>
               <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>Explore campus with a simpler way to find your destination.</Text>
-              <Pressable onPress={() => { clearMessages(); setMode("signup"); }} style={[styles.button, { backgroundColor: colors.primary }]}>
+              <Pressable onPress={continueAsGuest} style={[styles.button, { backgroundColor: colors.primary }]}>
                 <Text style={[styles.buttonText, { color: colors.primaryForeground }]}>Get Started</Text>
               </Pressable>
               {renderDivider()}
               {renderGoogleButton()}
+              {renderFooterLink("New to CampusNav?", "Sign Up", () => { clearMessages(); setMode("signup"); })}
               {renderFooterLink("Already have an account?", "Sign In", () => { clearMessages(); setMode("login"); })}
             </>
           )}
@@ -367,6 +374,7 @@ export default function LoginScreen() {
               {renderDivider()}
               {renderGoogleButton()}
               {renderFooterLink("Don't have an account?", "Sign Up", () => { clearMessages(); setMode("signup"); })}
+              {renderGuestLink()}
             </>
           )}
 
@@ -415,6 +423,7 @@ export default function LoginScreen() {
               {renderDivider()}
               {renderGoogleButton()}
               {renderFooterLink("Already have an account?", "Sign In", () => { clearMessages(); setMode("login"); })}
+              {renderGuestLink()}
             </>
           )}
 
@@ -626,6 +635,11 @@ const styles = StyleSheet.create({
     gap: 4, 
     flexWrap: "wrap", 
     marginTop: 8 },
+  guestLink: {
+    alignSelf: "center",
+    marginTop: 8,
+    paddingVertical: 4,
+  },
   forgotLink: { 
     alignSelf: "flex-end", 
     paddingVertical: 2 },

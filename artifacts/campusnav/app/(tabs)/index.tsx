@@ -39,6 +39,11 @@ import { useActiveUsers } from "@/hooks/useActiveUsers";
 import { useBuildings } from "@/hooks/useBuildings";
 import { getApiBaseUrl } from "@/utils/api";
 import { haversineDistance } from "@/utils/distance";
+import {
+  fetchWalkingRoute,
+  type WalkingRoute,
+  type WalkingRouteStatus,
+} from "@/utils/walkingRoute";
 
 type CampusFloorPlan = {
   campusName: string;
@@ -211,6 +216,9 @@ export default function MapScreen() {
   const [selectedCampus, setSelectedCampus] = useState<CampusLocation>(DEFAULT_CAMPUS);
   const [campusMenuOpen, setCampusMenuOpen] = useState(false);
   const [navTarget, setNavTarget] = useState<Building | null>(null);
+  const [walkingRoute, setWalkingRoute] = useState<WalkingRoute | null>(null);
+  const [routeStatus, setRouteStatus] = useState<WalkingRouteStatus>("idle");
+  const [routeError, setRouteError] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [currentFloor, setCurrentFloor] = useState<FloorLevel>("Ground");
   const [floorPlans, setFloorPlans] = useState<CampusFloorPlan[]>([]);
@@ -272,7 +280,6 @@ export default function MapScreen() {
   });
   const campusBuildings = filteredBuildings.filter((building) => building.campusName === selectedCampus.name);
   const selectedFloorPlan = floorPlans.find((plan) => plan.campusName === selectedCampus.name && plan.floorLevel === currentFloor);
-
   const topPad = Platform.OS === "web" ? 40 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
   const campusMenuTop = topPad + (isWeb ? 0 : 12) + 118;
@@ -291,13 +298,54 @@ export default function MapScreen() {
         )
       : null;
 
+  useEffect(() => {
+    if (!navTarget || !location.coords) {
+      setWalkingRoute(null);
+      setRouteStatus("idle");
+      setRouteError(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    setWalkingRoute(null);
+    setRouteStatus("loading");
+    setRouteError(null);
+
+    fetchWalkingRoute(
+      location.coords,
+      { latitude: navTarget.latitude, longitude: navTarget.longitude },
+      controller.signal,
+    )
+      .then((route) => {
+        setWalkingRoute(route);
+        setRouteStatus("ready");
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
+        console.error("Failed to load walking route:", error);
+        setRouteError(
+          error instanceof Error
+            ? error.message
+            : "Unable to load the walking route. Check your connection and try again.",
+        );
+        setRouteStatus("error");
+      });
+
+    return () => controller.abort();
+  }, [
+    location.coords?.latitude,
+    location.coords?.longitude,
+    navTarget?.latitude,
+    navTarget?.longitude,
+  ]);
+
   const handleMarkerPress = (building: Building) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSelectedBuilding(building);
     if (!isWeb) {
       mapRef.current?.animateToRegion(
         {
-          latitude: building.latitude - 0.0003,
+          latitude: building.latitude,
           longitude: building.longitude,
           latitudeDelta: 0.0025,
           longitudeDelta: 0.0025,
@@ -415,7 +463,7 @@ export default function MapScreen() {
       <View
         style={[
           styles.floorButtonsContainer,
-          { top: "50%" as any },
+          { top: isNavigating ? "40%" as any : "50%" as any },
         ]}
       >
           <Pressable
@@ -485,6 +533,12 @@ export default function MapScreen() {
         showsCompass={false}
         minZoomLevel={12}
         maxZoomLevel={20}
+        mapPadding={{
+          top: 0,
+          right: 0,
+          bottom: selectedBuilding ? bottomPad + 230 : navTarget ? bottomPad + 210 : 0,
+          left: 0,
+        }}
         onPress={() => setSelectedBuilding(null)}
       >
           {selectedFloorPlan && (
@@ -505,21 +559,18 @@ export default function MapScreen() {
           />
 
           {/* Route line when navigating */}
-          {isNavigating && location.coords && (
+          {isNavigating && walkingRoute && (
             <Polyline
-              coordinates={[
-                {
-                  latitude: location.coords.latitude,
-                  longitude: location.coords.longitude,
-                },
-                {
-                  latitude: navTarget.latitude,
-                  longitude: navTarget.longitude,
-                },
-              ]}
+              coordinates={walkingRoute.coordinates}
+              strokeColor="#fff"
+              strokeWidth={8}
+            />
+          )}
+          {isNavigating && walkingRoute && (
+            <Polyline
+              coordinates={walkingRoute.coordinates}
               strokeColor={colors.primary}
               strokeWidth={4}
-              lineDashPattern={[12, 6]}
             />
           )}
 
@@ -585,8 +636,8 @@ export default function MapScreen() {
           styles.header,
           {
             top: topPad + (isWeb ? 0 : 12),
-            backgroundColor: isNavigating ? colors.primary + "11" : colors.card,
-            borderColor: isNavigating ? colors.primary + "44" : colors.border,
+            backgroundColor: colors.card,
+            borderColor: colors.border,
           },
         ]}
       >
@@ -746,7 +797,7 @@ export default function MapScreen() {
               ))}
             </ScrollView>
             <Text style={[styles.campusAttribution, { color: colors.mutedForeground }]}>
-              CTU Campuses locations © OpenStreetMap contributors and Google Maps
+              Map data © OpenStreetMap contributors · Walking routes via OpenStreetMap
             </Text>
           </View>
         </>
@@ -763,7 +814,7 @@ export default function MapScreen() {
             style={[
               styles.accountMenu,
               {
-                top: topPad + (isWeb ? 0 : 12) + 120,
+                top: topPad + (isWeb ? 0 : 12) + 68,
                 backgroundColor: colors.card,
                 borderColor: colors.border,
               },
@@ -894,7 +945,11 @@ export default function MapScreen() {
       {/* Walking Navigation Panel */}
       <WalkingNavPanel
         building={navTarget}
-        distanceMeters={distanceMeters}
+        distanceMeters={
+          routeStatus === "ready" ? walkingRoute?.distanceMeters ?? null : distanceMeters
+        }
+        routeStatus={routeStatus}
+        routeError={routeError}
         onStop={handleStopNavigation}
       />
     </View>
@@ -1008,9 +1063,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.16,
+    shadowRadius: 10,
+    elevation: 6,
   },
   headerLeft: {
     flexDirection: "row",
@@ -1087,9 +1142,9 @@ const styles = StyleSheet.create({
     left: 16,
     right: 16,
     maxHeight: 460,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
-    padding: 8,
+    padding: 12,
     zIndex: 100,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
@@ -1132,9 +1187,9 @@ const styles = StyleSheet.create({
   },
   accountMenu: {
     position: "absolute",
-    right: 16,
+    right: 32,
     width: 220,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     padding: 12,
     zIndex: 100,

@@ -178,10 +178,10 @@ function SuperAdminDashboard({
   const recentUsers = users.slice(0, 5);
 
   return (
-    <div className="space-y-5 p-4 sm:space-y-6 sm:p-6">
+    <div className="space-y-5 p-4 sm:space-y-6 sm:p-6 bg-[#e1eef5]">
       <header>
-        <h1 className="text-xl font-bold text-foreground sm:text-2xl">System Dashboard</h1>
-        <p className="mt-0.5 text-sm text-muted-foreground">Systemwide campus coverage, administrator access, and user activity.</p>
+        <h1 className="text-xl font-bold text-sky-600/90 sm:text-2xl">System Dashboard</h1>
+        <p className="mt-0.5 text-sm text-sky-600/70">Systemwide campus coverage, administrator access, and user activity.</p>
       </header>
 
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
@@ -199,7 +199,7 @@ function SuperAdminDashboard({
             <CardTitle className="text-lg">Campus coverage</CardTitle>
             <p className="mt-1 text-sm text-muted-foreground">Administrator access and building records by campus.</p>
           </div>
-          <Link href="/" className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
+          <Link href="/" className="inline-flex items-center gap-1 text-sm text-sky-900/100 hover:underline">
             Manage admins <ChevronRight className="h-4 w-4" />
           </Link>
         </CardHeader>
@@ -260,7 +260,7 @@ function SuperAdminDashboard({
               </div>
             )}
             <div className="border-t border-border px-5 py-3">
-              <Link href="/users" className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
+              <Link href="/users" className="inline-flex items-center gap-1 text-sm text-sky-900/100 hover:underline">
                 View all users <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
@@ -270,10 +270,10 @@ function SuperAdminDashboard({
         <Card>
           <CardHeader><CardTitle className="text-lg">Quick access</CardTitle></CardHeader>
           <CardContent className="flex flex-col items-start gap-2">
-            <Link href="/" className="text-sm text-primary hover:underline">Campus admin accounts</Link>
-            <Link href="/users" className="text-sm text-primary hover:underline">Registered users</Link>
-            <Link href="/floor-plans" className="text-sm text-primary hover:underline">Campus floor plans</Link>
-            <Link href="/settings" className="text-sm text-primary hover:underline">System settings</Link>
+            <Link href="/" className="text-sm text-sky-900/90 hover:underline">Campus admin accounts</Link>
+            <Link href="/users" className="text-sm text-sky-900/90 hover:underline">Registered users</Link>
+            <Link href="/floor-plans" className="text-sm text-sky-900/90 hover:underline">Campus floor plans</Link>
+            <Link href="/settings" className="text-sm text-sky-900/90 hover:underline">System settings</Link>
           </CardContent>
         </Card>
       </div>
@@ -290,7 +290,7 @@ function SummaryCard({ label, value, detail, icon: Icon }: { label: string; valu
           <p className="mt-1 text-2xl font-bold tabular-nums">{value}</p>
           <p className="mt-1 text-xs text-muted-foreground">{detail}</p>
         </div>
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sky-300/10 text-sky-700/50">
           <Icon className="h-5 w-5" />
         </div>
       </CardContent>

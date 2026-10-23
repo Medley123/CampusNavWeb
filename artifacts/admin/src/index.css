@@ -190,7 +190,7 @@
   color: hsl(48 100% 82%);
   --primary: 48 100% 50%;
   --primary-foreground: 345 42% 14%;
-  --primary-border: hsl(48 80% 42%);
+  --primary-border: #3049c7;
 }
 
 .super-admin-main .text-foreground {
