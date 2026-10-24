@@ -28,7 +28,7 @@ export default function AdminLoginPage() {
           <div className="absolute -right-20 -top-24 h-64 w-64 rounded-full border bg-blue-200/50" />
           <div className="absolute -bottom-36 -left-20 h-72 w-72 rounded-full border bg-sky-700/50" />
           <div className="relative">
-            <img src="/cmpslogo.png" alt="CampusNav logo" className="mx-auto mb-7 h-24 w-24 rounded-2xl object-cover shadow-lg" />
+            <img src="/campusnavlg.png" alt="CampusNav logo" className="mx-auto mb-8 h-30 w-30 rounded-3xl object-cover shadow-lg" />
             <h1 className="text-3xl font-bold tracking-normal">Welcome to CampusNav</h1>
             <p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-white/75">Your campus, organized in one place. Sign in to manage buildings and campus information.</p>
           </div>

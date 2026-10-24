@@ -59,6 +59,14 @@ export default function BuildingDetailScreen() {
     setZoom(1);
   };
 
+  const handleGoBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/");
+    }
+  };
+
   if (!building) {
     return (
       <View
@@ -72,7 +80,7 @@ export default function BuildingDetailScreen() {
           Building not found
         </Text>
         <Pressable
-          onPress={() => router.back()}
+          onPress={handleGoBack}
           style={[styles.backBtn, { backgroundColor: colors.primary }]}
         >
           <Text style={styles.backBtnText}>Go Back</Text>
@@ -111,7 +119,7 @@ export default function BuildingDetailScreen() {
         <Pressable
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            router.back();
+            handleGoBack();
           }}
           style={[styles.heroBack, { backgroundColor: "rgba(255,255,255,0.2)" }]}
           hitSlop={8}

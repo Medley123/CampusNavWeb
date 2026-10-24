@@ -31,8 +31,7 @@ const CATEGORIES: Array<{ key: BuildingCategory | "all"; label: string }> = [
   { key: "facility", label: "Facility" },
   { key: "sports", label: "Sports" },
 ];
-
-const EXPLORE_BACKGROUND = require("../../assets/images/ctucampus.jpg");
+//const EXPLORE_BACKGROUND = require("../../assets/images/ctucampus.jpg");
 
 export default function SearchScreen() {
   const colors = useColors();
@@ -65,8 +64,8 @@ export default function SearchScreen() {
   }, [buildings, query, activeCategory]);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Image
+  <View style={[styles.container, { backgroundColor: colors.background }]}>
+     {/*Image
         source={EXPLORE_BACKGROUND}
         style={styles.backgroundImage}
         resizeMode="cover"
@@ -74,7 +73,7 @@ export default function SearchScreen() {
       <View
         style={[styles.backgroundWash, { backgroundColor: colors.background + "D9" }]}
         pointerEvents="none"
-      />
+      /> */}
 
       {/* Top bar */}
       <View

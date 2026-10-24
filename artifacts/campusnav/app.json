@@ -4,14 +4,14 @@
     "slug": "campusnav",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/campusnavlg.png",
+    "icon": "./assets/images/CampusNav.png",
     "scheme": "campusnav",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/campusnavlg.png",
       "resizeMode": "contain",
-      "backgroundColor": "#1B6B3A"
+      "backgroundColor": "maroon"
     },
     "ios": {
       "supportsTablet": false,
@@ -28,7 +28,7 @@
       ]
     },
     "web": {
-      "favicon": "./assets/images/campusnavlg.png"
+      "favicon": "./assets/images/CampusNav.png"
     },
     "plugins": [
       [

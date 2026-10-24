@@ -90,7 +90,7 @@ function getBuildingPosition(lat: number, lng: number) {
 }
 
 const CAMPUS_MAP_IMAGE = require("../../assets/images/campus-map.png");
-const CAMPUS_LOGO = require("../../assets/images/cmpslogo.png");
+const CAMPUS_LOGO = require("../../assets/images/CampusNav.png");
 
 function WebRouteLine({
   fromLat, fromLng, toLat, toLng,
