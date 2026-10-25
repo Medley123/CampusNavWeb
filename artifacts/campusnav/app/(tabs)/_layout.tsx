@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { LinearGradient } from "expo-linear-gradient";
+//port { LinearGradient } from "expo-linear-gradient";
 import { SymbolView } from "expo-symbols";
 import { Feather } from "@expo/vector-icons";
 import React from "react";

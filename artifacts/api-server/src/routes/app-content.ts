@@ -213,4 +213,26 @@ router.patch("/admin/feedback/:id", requireSuperAdmin, async (req, res) => {
   }
 });
 
+router.delete("/admin/feedback", requireSuperAdmin, async (req, res) => {
+  const all = req.body?.all === true;
+  const ids: number[] = Array.isArray(req.body?.ids)
+    ? req.body.ids.map(Number).filter((id: number) => Number.isInteger(id) && id > 0)
+    : [];
+  if (!all && ids.length === 0) {
+    res.status(400).json({ error: "Provide ids or all: true." });
+    return;
+  }
+
+  try {
+    let query = supabase.from("app_feedback").delete();
+    query = all ? query.gt("id", 0) : query.in("id", ids);
+    const { error } = await query;
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error({ err }, "Failed to delete app feedback");
+    res.status(500).json({ error: "Could not delete feedback." });
+  }
+});
+
 export default router;
