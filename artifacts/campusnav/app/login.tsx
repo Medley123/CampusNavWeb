@@ -24,7 +24,8 @@ import { getApiBaseUrl } from "@/utils/api";
 
 WebBrowser.maybeCompleteAuthSession();
 
-const LOGO = require("../assets/images/CampusNav.png");
+const LOGO_WIDE = require("../assets/images/campusnavlg.png"); 
+const LOGO_MOBILE = require("../assets/images/CampusNav.png");   
 const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
 const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
 const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
@@ -304,7 +305,7 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={[styles.screen, { backgroundColor: "#FFCC00" }]}
+      style={[styles.screen, { backgroundColor: "#242730" }]}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView
@@ -314,25 +315,53 @@ export default function LoginScreen() {
         <View style={[styles.authShell, { backgroundColor: colors.card }, isWide ? styles.authShellWide : styles.authShellNarrow]}>
           {isWide && (
             <View style={styles.welcomePanel}>
-              <Image source={LOGO} style={styles.welcomeLogo} />
+              <View style={styles.circleTopRight} />
+              <View style={styles.circleBottomLeft} />
+              <View style={styles.logoContainer}>
+                  <Image source={LOGO_WIDE} style={styles.welcomeLogo} />
+              </View>
               <Text style={styles.welcomeTitle}>Your Campus, At a Glance</Text>
               <Text style={styles.welcomeSubtitle}>A simpler way to find the places that matter at CTU.</Text>
             </View>
           )}
-          <View style={[styles.panel, { backgroundColor: colors.card, width: isWide ? "55%" : "100%", maxWidth: isWide ? undefined : 430 }]}>
-          {!isWide && <Image source={LOGO} style={styles.logo} />}
+          
+  
+        <View style={[styles.panel, { backgroundColor: colors.card, width: isWide ? "55%" : "100%", overflow: "hidden", position: "relative" }]}>
+        
+        {/* BACKGROUND CIRCLES CONTAINER */}
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0 }} pointerEvents="none">
+          <View style={styles.circleTopRight} />
+          <View style={styles.circleBottomLeft} />
+        </View>
 
+        {/* Kani ang wrapper para mo-ibabaw ang sa text ug logo */}
+        <View style={{ zIndex: 10, width: '100%' }}>
+          {!isWide && (
+        <View style={{ width: '100%', alignItems: 'center', marginBottom: 20 }}>
+          <View style={styles.logoContainerMobile}>
+            <Image source={LOGO_MOBILE} style={styles.welcomeLogoMobile} />
+          </View>
+        </View>
+      )}
           {mode === "welcome" && (
             <>
-              <Text style={[styles.title, { color: colors.foreground }]}>Welcome to CampusNav</Text>
+              <Text style={[styles.title, { color: colors.foreground }]}>
+                Welcome to <Text style={{ color: "#01274d" }}>Campus</Text><Text style={{ color: "#FFCC00" }}>Nav</Text>
+              </Text>
               <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>Explore campus with a simpler way to find your destination.</Text>
               <Pressable onPress={continueAsGuest} style={[styles.button, { backgroundColor: colors.primary }]}>
                 <Text style={[styles.buttonText, { color: colors.primaryForeground }]}>Get Started</Text>
               </Pressable>
               {renderDivider()}
               {renderGoogleButton()}
+              <View style={{ marginTop: 36, width: '100%', alignItems: 'center' }}>
+            <View style={{ marginBottom: 12 }}>
               {renderFooterLink("New to CampusNav?", "Sign Up", () => { clearMessages(); setMode("signup"); })}
+            </View>
+            <View>
               {renderFooterLink("Already have an account?", "Sign In", () => { clearMessages(); setMode("login"); })}
+            </View>
+          </View>
             </>
           )}
 
@@ -506,10 +535,12 @@ export default function LoginScreen() {
 
           {error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
           {notice && <Text style={[styles.notice, { color: colors.primary }]}>{notice}</Text>}
+            </View>
           </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
+    
   );
 }
 
@@ -536,12 +567,67 @@ const styles = StyleSheet.create({
     alignItems: "center", 
     justifyContent: "center", 
     padding: 40, 
-    backgroundColor: "#800000" },
+    backgroundColor: "#0C4A6E",
+    overflow: "hidden",
+  },
+  circleTopRight: {
+    position: 'absolute',
+    top: -96,
+    right: -80,
+    width: 256,
+    height: 256,
+    borderRadius: 128,
+    backgroundColor: 'rgba(191, 219, 254, 0.5)', // bg-blue-200/50
+  },
+  circleBottomLeft: {
+    position: 'absolute',
+    bottom: -144,
+    left: -80,
+    width: 288,
+    height: 288,
+    borderRadius: 144,
+    backgroundColor: 'rgba(3, 105, 161, 0.5)', // bg-sky-700/50
+  },
+  logoContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255, 255, 255, 0)',
+    alignItems: 'center',       
+    justifyContent: 'center',   
+    marginBottom: 28,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 8,
+  },
   welcomeLogo: { 
-    width: 96, 
-    height: 96, 
-    borderRadius: 24, 
-    marginBottom: 28 },
+    width: 110,  
+    height: 110, 
+    resizeMode: 'contain',
+  },
+
+  logoContainerMobile: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  welcomeLogoMobile: {
+    width: 48,   
+    height: 48,
+    resizeMode: 'contain',
+  },
+
+
   welcomeTitle: { 
     color: "#FFFFFF", 
     fontSize: 30, 
@@ -560,7 +646,11 @@ const styles = StyleSheet.create({
     alignSelf: "center", 
     padding: 36, 
     gap: 12, 
-    overflow: "hidden" },
+    overflow: "hidden", //dili molapas
+    position: "relative" 
+  },
+  
+
   logo: { 
     width: 72, 
     height: 72, 
@@ -632,12 +722,15 @@ const styles = StyleSheet.create({
     flexDirection: "row", 
     alignItems: "center", 
     justifyContent: "center", 
-    gap: 4, 
-    flexWrap: "wrap", 
-    marginTop: 8 },
+    gap: 1, 
+    //flexWrap: "wrap", 
+    //marginTop: 20, 
+    
+  },
   guestLink: {
     alignSelf: "center",
     marginTop: 8,
+    //marginBottom: 6,
     paddingVertical: 4,
   },
   forgotLink: { 

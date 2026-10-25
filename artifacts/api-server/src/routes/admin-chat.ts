@@ -185,4 +185,38 @@ router.post("/admin/chat/:adminId/messages", requireAdmin, async (req, res) => {
   }
 });
 
+router.delete("/admin/chat/:adminId/messages", requireAdmin, async (req, res) => {
+  console.log("DELETE route hit", req.params.adminId, req.body);
+
+  const account = res.locals.adminAccount as AdminAccount;
+  const campusAdminId = parseAdminId(req.params.adminId);
+  if (!campusAdminId || !canAccessConversation(account, campusAdminId)) {
+    res.status(404).json({ error: "Conversation not found." });
+    return;
+  }
+
+  const all = req.body?.all === true;
+  const ids: number[] = Array.isArray(req.body?.ids)
+    ? req.body.ids.map(Number).filter((id: number) => Number.isInteger(id) && id > 0)
+    : [];
+  if (!all && ids.length === 0) {
+    res.status(400).json({ error: "Provide ids or all: true." });
+    return;
+  }
+
+  try {
+    let query = supabase.from("admin_chat_messages")
+      .delete()
+      .eq("campus_admin_id", campusAdminId);
+    if (!all) query = query.in("id", ids);
+
+    const { error } = await query;
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error({ err, campusAdminId }, "Failed to delete admin chat messages");
+    res.status(500).json({ error: "Could not delete messages." });
+  }
+});
+
 export default router;

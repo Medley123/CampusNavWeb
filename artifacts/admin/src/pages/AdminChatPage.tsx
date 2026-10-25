@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { MessageCircle, RefreshCw, Send } from "lucide-react";
+import { MessageCircle, RefreshCw, Send, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAdminAuth } from "@/hooks/use-admin-auth";
 
@@ -34,9 +34,11 @@ export default function AdminChatPage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedAdminId, setSelectedAdminId] = useState<number | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [draft, setDraft] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const selectedAdminIdRef = useRef(selectedAdminId);
   selectedAdminIdRef.current = selectedAdminId;
@@ -57,7 +59,13 @@ export default function AdminChatPage() {
     const response = await fetch(`/api/admin/chat/${adminId}/messages`, { credentials: "same-origin" });
     const data = await response.json();
     if (!response.ok) throw new Error(data?.error || "Could not load messages.");
-    if (selectedAdminIdRef.current === adminId) setMessages(data as ChatMessage[]);
+    if (selectedAdminIdRef.current === adminId) {
+      const next = data as ChatMessage[];
+      setMessages(next);
+      // Keep selection in sync with the 6-second polling refresh.
+      const validIds = new Set(next.map((message) => message.id));
+      setSelectedIds((current) => new Set([...current].filter((id) => validIds.has(id))));
+    }
   }, []);
 
   const refresh = useCallback(async () => {
@@ -80,6 +88,7 @@ export default function AdminChatPage() {
 
   useEffect(() => {
     setMessages([]);
+    setSelectedIds(new Set());
     if (selectedAdminId !== null) {
       void loadMessages(selectedAdminId).catch((reason: unknown) => {
         setError(reason instanceof Error ? reason.message : "Could not load messages.");
@@ -113,6 +122,55 @@ export default function AdminChatPage() {
     }
   };
 
+  const toggleOne = (id: number) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const allSelected = messages.length > 0 && selectedIds.size === messages.length;
+
+  const toggleAll = () => {
+    setSelectedIds(allSelected ? new Set() : new Set(messages.map((message) => message.id)));
+  };
+
+  const deleteMessages = async (all: boolean) => {
+    if (selectedAdminId === null) return;
+    const ids = all ? messages.map((message) => message.id) : Array.from(selectedIds);
+    if (ids.length === 0) return;
+
+    const count = `${ids.length} message${ids.length === 1 ? "" : "s"}`;
+    const label = all
+      ? `Delete all ${count} in this conversation? This cannot be undone.`
+      : `Delete ${count}? This cannot be undone.`;
+    if (!window.confirm(label)) return;
+
+    setDeleting(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/admin/chat/${selectedAdminId}/messages`, {
+        method: "DELETE",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(all ? { all: true } : { ids }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.error || "Could not delete messages.");
+
+      const removed = new Set(ids);
+      setMessages((current) => current.filter((message) => !removed.has(message.id)));
+      setSelectedIds(new Set());
+      await loadConversations();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Could not delete messages.");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <div className="space-y-5 p-4 sm:p-6">
       <header className="flex flex-wrap items-end justify-between gap-3">
@@ -122,7 +180,7 @@ export default function AdminChatPage() {
             {isSuperAdmin ? "Reply to messages from campus administrators." : "Send a message to the CampusNav Super Admin."}
           </p>
         </div>
-        <Button type="button" variant="outline" size="sm" onClick={() => void refresh()} disabled={loading} className="gap-2">
+        <Button type="button" variant="outline" size="sm" onClick={() => void refresh()} disabled={loading || deleting} className="gap-2">
           <RefreshCw className="h-4 w-4" />Refresh
         </Button>
       </header>
@@ -159,6 +217,44 @@ export default function AdminChatPage() {
             <p className="text-xs text-muted-foreground">{selectedConversation?.campusName ?? "CampusNav support"}</p>
           </div>
 
+          {messages.length > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2">
+              <label className="flex cursor-pointer items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 cursor-pointer accent-primary"
+                  checked={allSelected}
+                  onChange={toggleAll}
+                  disabled={deleting}
+                  aria-label="Select all messages"
+                />
+                {selectedIds.size > 0 ? `${selectedIds.size} selected` : "Select all"}
+              </label>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={selectedIds.size === 0 || deleting}
+                  onClick={() => void deleteMessages(false)}
+                  className="gap-2 text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />Delete selected{selectedIds.size > 0 ? ` (${selectedIds.size})` : ""}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="destructive"
+                  disabled={deleting}
+                  onClick={() => void deleteMessages(true)}
+                  className="gap-2"
+                >
+                  <Trash2 className="h-4 w-4" />Delete all
+                </Button>
+              </div>
+            </div>
+          )}
+
           <div className="flex-1 space-y-3 overflow-y-auto p-4" aria-live="polite">
             {loading && messages.length === 0 ? (
               <p className="py-8 text-center text-sm text-muted-foreground">Loading conversation...</p>
@@ -169,9 +265,18 @@ export default function AdminChatPage() {
               </div>
             ) : messages.map((message) => {
               const ownMessage = message.senderRole === role;
+              const isSelected = selectedIds.has(message.id);
               return (
-                <div key={message.id} className={`flex ${ownMessage ? "justify-end" : "justify-start"}`}>
-                  <article className={`max-w-[85%] rounded-xl px-3 py-2 ${ownMessage ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>
+                <div key={message.id} className={`flex items-center gap-2 ${ownMessage ? "justify-end" : "justify-start"}`}>
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 shrink-0 cursor-pointer accent-primary"
+                    checked={isSelected}
+                    onChange={() => toggleOne(message.id)}
+                    disabled={deleting}
+                    aria-label={`Select message from ${message.senderName}`}
+                  />
+                  <article className={`max-w-[85%] rounded-xl px-3 py-2 ${ownMessage ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"} ${isSelected ? "ring-2 ring-primary ring-offset-2 ring-offset-card" : ""}`}>
                     <p className={`mb-1 text-xs font-semibold ${ownMessage ? "text-primary-foreground/75" : "text-muted-foreground"}`}>{message.senderName}</p>
                     <p className="whitespace-pre-wrap break-words text-sm">{message.message}</p>
                     <time className={`mt-1 block text-right text-[10px] ${ownMessage ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{formatTime(message.createdAt)}</time>

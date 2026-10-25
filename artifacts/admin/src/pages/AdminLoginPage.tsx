@@ -25,10 +25,10 @@ export default function AdminLoginPage() {
     <main className="flex min-h-screen items-center justify-center bg-[#242730] p-4 sm:p-8">
       <div className="grid w-full max-w-5xl overflow-hidden rounded-3xl bg-card shadow-2xl md:min-h-[600px] md:grid-cols-[0.9fr_1.1fr]">
         <section className="relative flex flex-col items-center justify-center overflow-hidden bg-sky-900 px-8 py-10 text-center text-white sm:px-12 md:py-14">
-          <div className="absolute -right-20 -top-24 h-64 w-64 rounded-full border bg-blue-200/50" />
-          <div className="absolute -bottom-36 -left-20 h-72 w-72 rounded-full border bg-sky-700/50" />
+          <div className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-blue-200/50" />
+          <div className="absolute -bottom-36 -left-20 h-72 w-72 rounded-full bg-sky-700/50" />
           <div className="relative">
-            <img src="/campusnavlg.png" alt="CampusNav logo" className="mx-auto mb-8 h-30 w-30 rounded-3xl object-cover shadow-lg" />
+            <img src="/campusnavlg.png" alt="CampusNav logo" className="mx-auto mb-8 h-35 w-35 rounded-full object-cover shadow-lg" />
             <h1 className="text-3xl font-bold tracking-normal">Welcome to CampusNav</h1>
             <p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-white/75">Your campus, organized in one place. Sign in to manage buildings and campus information.</p>
           </div>
